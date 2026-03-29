@@ -1,0 +1,11 @@
+/**
+ * Content Script 전용 Tailwind CSS
+ *
+ * Shadow DOM 내부에서 사용되는 스타일.
+ * Shadow DOM이 CSS를 완전히 격리하므로 prefix 없이 표준 Tailwind를 사용한다.
+ * YouTube의 CSS와 충돌 없음 — Shadow DOM 경계가 보호해준다.
+ *
+ * 이 파일은 Vite의 ?inline suffix로 JS 문자열로 번들링되어
+ * adoptedStyleSheets를 통해 Shadow DOM에 주입된다.
+ */
+@import "tailwindcss";

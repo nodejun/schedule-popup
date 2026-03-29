@@ -1,0 +1,24 @@
+/*
+ * Shorts 숨김 CSS (document_start, 동기 주입)
+ *
+ * Chrome이 JS보다 먼저 주입하므로 깜빡임 없이 즉시 적용된다.
+ *
+ * :has() 셀렉터로 ytd-shorts가 DOM에 존재할 때만
+ * page-manager 자식을 숨긴다.
+ * → SPA 다른 페이지에서는 ytd-shorts가 없으므로 자동 해제된다.
+ *
+ * Chrome 105+ 지원 (:has는 2022년 8월부터 Stable)
+ */
+
+/* 1. Shorts 전용 커스텀 요소 직접 숨김 */
+ytd-shorts,
+ytd-reel-video-renderer {
+  display: none !important;
+}
+
+/* 2. Shorts 페이지일 때 page-manager의 모든 자식 숨김
+ *    (우리가 삽입할 Shadow DOM 컨테이너는 예외) */
+ytd-page-manager:has(ytd-shorts) > *:not([id^="short-scheduler-"]),
+ytd-page-manager:has(ytd-reel-video-renderer) > *:not([id^="short-scheduler-"]) {
+  display: none !important;
+}
