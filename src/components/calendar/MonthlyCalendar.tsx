@@ -21,7 +21,7 @@ import { DailyDetailPanel } from './DailyDetailPanel'
 import { Modal } from '@/components/common/Modal'
 import { ScheduleForm } from '@/components/schedule/ScheduleForm'
 import { Button } from '@/components/common/Button'
-import type { ScheduleInput } from '@/types/schedule'
+import type { Schedule, ScheduleInput } from '@/types/schedule'
 
 interface MonthlyCalendarProps {
   readonly onClose: () => void
@@ -52,6 +52,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
 
   const {
     googleAuth,
+    googleSchedules,
     isGoogleSyncing,
     connectGoogle,
     disconnectGoogle,
@@ -59,6 +60,13 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
   } = useGoogleCalendarStore()
 
   const [showDetail, setShowDetail] = useState(false)
+
+  // 로컬 스케줄 + Google 스케줄 합치기
+  const mergedMonthSchedules: Record<string, ReadonlyArray<Schedule>> = { ...monthSchedules }
+  for (const [date, googleItems] of Object.entries(googleSchedules)) {
+    const existing = mergedMonthSchedules[date] ?? []
+    mergedMonthSchedules[date] = [...existing, ...googleItems]
+  }
 
   useEffect(() => {
     loadSettings()
@@ -253,7 +261,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
             <MonthGrid
               currentMonth={currentMonth}
               selectedDate={showDetail ? selectedDate : ''}
-              monthSchedules={monthSchedules}
+              monthSchedules={mergedMonthSchedules}
               onDateSelect={handleDateSelect}
             />
           </div>
@@ -270,7 +278,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
             >
               <DailyDetailPanel
                 selectedDate={selectedDate}
-                schedules={schedules}
+                schedules={[...schedules, ...(googleSchedules[selectedDate] ?? [])]}
                 startHour={settings.timelineStartHour}
                 endHour={settings.timelineEndHour}
                 onEditSchedule={openEditForm}

@@ -18,6 +18,9 @@ import {
   toggleComplete as repoToggle,
 } from '@/storage/schedule-repository'
 import { getToday } from '@/utils/date-utils'
+import { createEvent, updateEvent, deleteEvent } from '@/services/google-calendar-api'
+import { scheduleToGoogleEvent } from '@/utils/schedule-converter'
+import { useGoogleCalendarStore } from './google-calendar-store'
 import {
   getCurrentMonth,
   getWeekDates,
@@ -134,9 +137,19 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       await repoAdd(input)
+
+      // Google Calendar에도 생성 (연결된 경우만)
+      const { googleAuth } = useGoogleCalendarStore.getState()
+      if (googleAuth.isAuthenticated) {
+        try {
+          await createEvent(scheduleToGoogleEvent(input))
+        } catch {
+          // Google 실패해도 로컬 저장은 유지
+        }
+      }
+
       const schedules = await getSchedulesByDate(get().selectedDate)
       set({ schedules, isLoading: false, isFormOpen: false })
-      // 캘린더 뷰도 갱신
       get().fetchMonthSchedules()
       get().fetchWeekSchedules()
     } catch (err) {
@@ -150,7 +163,44 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     const { selectedDate } = get()
     set({ isLoading: true, error: null })
     try {
-      await repoUpdate(selectedDate, id, patch)
+      const isGoogleEvent = id.startsWith('google_')
+
+      if (isGoogleEvent) {
+        // Google 스케줄 → Google API로만 수정 (로컬에 없음)
+        const { googleAuth } = useGoogleCalendarStore.getState()
+        if (googleAuth.isAuthenticated) {
+          const googleEventId = id.replace('google_', '')
+          await updateEvent(googleEventId, scheduleToGoogleEvent({
+            title: patch.title ?? '',
+            date: patch.date ?? selectedDate,
+            startTime: patch.startTime ?? '00:00',
+            endTime: patch.endTime ?? '23:59',
+            ...patch,
+          } as ScheduleInput))
+          // Google 동기화 갱신
+          useGoogleCalendarStore.getState().syncFromGoogle(get().currentMonth)
+        }
+      } else {
+        // 로컬 스케줄 → 로컬 저장소 수정
+        await repoUpdate(selectedDate, id, patch)
+
+        // Google 연결 시 Google에도 생성
+        const { googleAuth } = useGoogleCalendarStore.getState()
+        if (googleAuth.isAuthenticated) {
+          try {
+            await updateEvent(id, scheduleToGoogleEvent({
+              title: patch.title ?? '',
+              date: patch.date ?? selectedDate,
+              startTime: patch.startTime ?? '00:00',
+              endTime: patch.endTime ?? '23:59',
+              ...patch,
+            } as ScheduleInput))
+          } catch {
+            // Google 실패해도 로컬 수정은 유지
+          }
+        }
+      }
+
       const schedules = await getSchedulesByDate(selectedDate)
       set({
         schedules,
@@ -171,7 +221,31 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     const { selectedDate } = get()
     set({ isLoading: true, error: null })
     try {
-      await repoDelete(selectedDate, id)
+      const isGoogleEvent = id.startsWith('google_')
+
+      if (isGoogleEvent) {
+        // Google 스케줄 → Google API로만 삭제
+        const { googleAuth } = useGoogleCalendarStore.getState()
+        if (googleAuth.isAuthenticated) {
+          const googleEventId = id.replace('google_', '')
+          await deleteEvent(googleEventId)
+          useGoogleCalendarStore.getState().syncFromGoogle(get().currentMonth)
+        }
+      } else {
+        // 로컬 스케줄 → 로컬 저장소 삭제
+        await repoDelete(selectedDate, id)
+
+        // Google 연결 시 Google에서도 삭제
+        const { googleAuth } = useGoogleCalendarStore.getState()
+        if (googleAuth.isAuthenticated) {
+          try {
+            await deleteEvent(id)
+          } catch {
+            // Google 실패해도 로컬 삭제는 유지
+          }
+        }
+      }
+
       const schedules = await getSchedulesByDate(selectedDate)
       set({ schedules, isLoading: false })
       get().fetchMonthSchedules()

@@ -54,9 +54,32 @@ chrome.webNavigation.onBeforeNavigate.addListener(
 // 확장프로그램 재설치 시 stale context 문제가 발생할 수 있으므로,
 // 서비스 워커가 리다이렉트를 대행한다.
 
-chrome.runtime.onMessage.addListener((message, sender) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'open-scheduler' && sender.tab?.id) {
     void chrome.tabs.update(sender.tab.id, { url: SCHEDULER_URL })
+  }
+
+  // Google OAuth 메시지 처리
+  // Content Script에서는 chrome.identity를 직접 호출할 수 없으므로
+  // Service Worker가 대신 처리하고 결과를 반환한다.
+  if (message.type === 'google-auth-token') {
+    chrome.identity
+      .getAuthToken({ interactive: message.interactive ?? true })
+      .then((result) => {
+        sendResponse({ token: result.token ?? null })
+      })
+      .catch(() => {
+        sendResponse({ token: null })
+      })
+    return true // 비동기 응답을 위해 true 반환 필수
+  }
+
+  if (message.type === 'google-auth-remove') {
+    chrome.identity
+      .removeCachedAuthToken({ token: message.token })
+      .then(() => sendResponse({ success: true }))
+      .catch(() => sendResponse({ success: false }))
+    return true
   }
 })
 

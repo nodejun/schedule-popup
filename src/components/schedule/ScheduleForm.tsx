@@ -123,7 +123,7 @@ export const ScheduleForm = ({
     return newErrors
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const validationErrors = validate()
@@ -141,7 +141,12 @@ export const ScheduleForm = ({
       color: form.color,
     }
 
-    onSubmit(input)
+    try {
+      await onSubmit(input)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      setErrors({ overlap: `수정 실패: ${msg}` })
+    }
   }
 
   const isEditMode = editingSchedule !== null
