@@ -88,3 +88,18 @@ export const getTimeDurationMinutes = (
 ): number => timeToMinutes(endTime) - timeToMinutes(startTime)
 
 export const isToday = (dateStr: string): boolean => dateStr === getToday()
+
+/**
+ * 분(숫자)을 "HH:mm" 문자열로 변환한다.
+ * timeToMinutes의 역함수.
+ *
+ * @example
+ * minutesToTimeString(540)  // → '09:00'
+ * minutesToTimeString(630)  // → '10:30'
+ * minutesToTimeString(1080) // → '18:00'
+ */
+export const minutesToTimeString = (minutes: number): string => {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}

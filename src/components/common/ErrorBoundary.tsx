@@ -75,46 +75,21 @@ export class ErrorBoundary extends Component<
       // 기본 에러 UI
       return (
         <div
-          className="bg-white dark:bg-[#1f1f1f] rounded-2xl ring-1 ring-black/5 dark:ring-white/10"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '48px 24px',
-            textAlign: 'center',
-            minHeight: '200px',
-          }}
+          className="bg-white dark:bg-[#1f1f1f] rounded-2xl ring-1 ring-black/5 dark:ring-white/10 flex flex-col items-center justify-center px-6 py-12 text-center min-h-[200px]"
         >
-          <div
-            className="text-red-400"
-            style={{ fontSize: '40px', marginBottom: '16px' }}
-          >
+          <div className="text-[40px] mb-4 text-red-400">
             !
           </div>
-          <h3
-            className="text-gray-900 dark:text-neutral-200 font-bold leading-snug"
-            style={{ fontSize: '16px', margin: '0 0 8px' }}
-          >
+          <h3 className="text-base mb-2 m-0 text-gray-900 dark:text-neutral-200 font-bold leading-snug">
             문제가 발생했습니다
           </h3>
-          <p
-            className="text-gray-400 dark:text-neutral-500 leading-snug"
-            style={{ fontSize: '13px', margin: '0 0 20px', maxWidth: '280px' }}
-          >
+          <p className="text-[13px] mb-5 m-0 max-w-[280px] text-gray-400 dark:text-neutral-500 leading-snug">
             {this.state.errorMessage ?? '일시적인 오류가 발생했습니다.'}
           </p>
           <button
             type="button"
             onClick={this.handleRetry}
-            className="bg-red-500 text-white hover:bg-red-600 hover:scale-[1.02] transition-all duration-200 rounded-full"
-            style={{
-              padding: '8px 20px',
-              fontSize: '13px',
-              fontWeight: 500,
-              border: 'none',
-              cursor: 'pointer',
-            }}
+            className="px-5 py-2 text-[13px] font-medium border-none cursor-pointer bg-red-500 text-white hover:bg-red-600 hover:scale-[1.02] transition-all duration-200 rounded-full"
           >
             다시 시도
           </button>

@@ -18,6 +18,7 @@ interface DailyDetailPanelProps {
   readonly onToggleComplete: (id: string) => void
   readonly onOpenAddForm: () => void
   readonly onClose: () => void
+  readonly onTimeSlotClick?: (startTime: string, endTime: string) => void
 }
 
 export const DailyDetailPanel = ({
@@ -29,17 +30,15 @@ export const DailyDetailPanel = ({
   onToggleComplete,
   onOpenAddForm,
   onClose,
+  onTimeSlotClick,
 }: DailyDetailPanelProps) => {
   return (
     <div
-      className="bg-white dark:bg-[#252525] rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-white/10"
-      style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+      className="bg-white dark:bg-[#252525] rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-white/10 h-full flex flex-col"
     >
       {/* 헤더 — 고정 */}
-      <div
-        className="flex items-center justify-between"
-        style={{ padding: '16px 20px 12px', flexShrink: 0 }}
-      >
+      <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0">
+
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -70,10 +69,9 @@ export const DailyDetailPanel = ({
         <button
           type="button"
           onClick={onOpenAddForm}
-          className="flex items-center gap-1.5 text-sm font-medium rounded-full
+          className="flex items-center gap-1.5 text-sm font-medium rounded-full px-4 py-2
                      bg-red-500 text-white hover:bg-red-600 active:bg-red-700
                      transition-all duration-200 hover:scale-[1.02]"
-          style={{ padding: '8px 16px' }}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M7 2V12M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -83,7 +81,7 @@ export const DailyDetailPanel = ({
       </div>
 
       {/* 타임라인 — 스크롤 영역 */}
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      <div className="flex-1 overflow-y-auto min-h-0">
         <TimelineView
           schedules={schedules}
           selectedDate={selectedDate}
@@ -91,6 +89,7 @@ export const DailyDetailPanel = ({
           endHour={endHour}
           onEditSchedule={onEditSchedule}
           onToggleComplete={onToggleComplete}
+          onTimeSlotClick={onTimeSlotClick}
         />
       </div>
     </div>

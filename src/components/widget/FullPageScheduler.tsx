@@ -66,7 +66,7 @@ export const FullPageScheduler = (): ReactNode => {
         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
           ShortScheduler
         </h1>
-        <Button variant="primary" size="md" onClick={openAddForm}>
+        <Button variant="primary" size="md" onClick={() => openAddForm()}>
           + 일정 추가
         </Button>
       </div>

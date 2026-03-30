@@ -68,6 +68,7 @@ export const ScheduleCard = ({
       className={[
         'absolute left-14 right-2 cursor-pointer overflow-hidden',
         'rounded-xl transition-all duration-200 hover:scale-[1.02]',
+        'min-h-9 px-2.5 py-2 flex flex-col justify-between',
         colors.bg,
         schedule.isCompleted ? 'opacity-50' : '',
         isNow ? 'ring-1 ring-red-400/30' : '',
@@ -75,14 +76,12 @@ export const ScheduleCard = ({
       style={{
         top: `${topPercent}%`,
         height: `${minHeight}%`,
-        minHeight: '36px',
         borderLeft: `4px solid ${isNow ? '#ef4444' : colors.borderColor}`,
-        padding: '8px 10px',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
       }}
-      onClick={() => onEdit(schedule)}
+      onClick={(e) => {
+        e.stopPropagation()
+        onEdit(schedule)
+      }}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -90,10 +89,10 @@ export const ScheduleCard = ({
       }}
     >
       {/* 상단: 체크박스 + 제목 */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+      <div className="flex items-start gap-1.5">
         <button
           type="button"
-          style={{ flexShrink: 0, marginTop: '1px', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+          className="shrink-0 mt-px bg-transparent border-none p-0 cursor-pointer"
           onClick={(e) => {
             e.stopPropagation()
             onToggleComplete(schedule.id)
@@ -101,12 +100,11 @@ export const ScheduleCard = ({
           aria-label={schedule.isCompleted ? '미완료로 변경' : '완료로 변경'}
         >
           <div
-            className={`flex items-center justify-center transition-all duration-200 ${
+            className={`flex items-center justify-center transition-all duration-200 w-4 h-4 rounded border-2 ${
               schedule.isCompleted
                 ? 'bg-red-400 border-red-400'
                 : 'border-gray-300 dark:border-neutral-500'
             }`}
-            style={{ width: '16px', height: '16px', borderRadius: '4px', border: '2px solid' }}
           >
             {schedule.isCompleted && (
               <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={3}>
@@ -116,11 +114,10 @@ export const ScheduleCard = ({
           </div>
         </button>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="flex-1 min-w-0">
           {/* 제목 */}
           <p
-            className={`${colors.text} ${schedule.isCompleted ? 'line-through' : ''}`}
-            style={{ fontSize: '13px', fontWeight: 600, margin: 0, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            className={`text-[13px] font-semibold m-0 leading-tight truncate ${colors.text} ${schedule.isCompleted ? 'line-through' : ''}`}
           >
             {schedule.title}
           </p>
@@ -128,8 +125,7 @@ export const ScheduleCard = ({
           {/* 설명 */}
           {hasDescription && (
             <p
-              className="text-gray-600 dark:text-neutral-400 leading-snug"
-              style={{ fontSize: '11px', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+              className="text-[11px] mt-0.5 truncate text-gray-600 dark:text-neutral-400 leading-snug"
             >
               {schedule.description}
             </p>
@@ -139,8 +135,7 @@ export const ScheduleCard = ({
 
       {/* 하단: 시간 (왼쪽 아래) */}
       <p
-        className="text-gray-400 dark:text-neutral-500 leading-snug"
-        style={{ fontSize: '10px', margin: '4px 0 0 22px', fontVariantNumeric: 'tabular-nums' }}
+        className="text-[10px] mt-1 ml-[22px] tabular-nums text-gray-400 dark:text-neutral-500 leading-snug"
       >
         {schedule.startTime} – {schedule.endTime}
       </p>

@@ -25,11 +25,10 @@ export const MonthGrid = ({
   const weeks = getMonthGridDates(currentMonth)
 
   return (
-    <div style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+    <div className="w-full flex-1 flex flex-col min-h-0">
       {/* 요일 헤더 */}
-      <div
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flexShrink: 0, padding: '4px 6px 0', margin: '0 4px' }}
-      >
+      <div className="grid grid-cols-7 shrink-0 px-1.5 pt-1 mx-1">
+
         {WEEKDAY_LABELS.map((label, index) => (
           <div
             key={label}
@@ -45,11 +44,11 @@ export const MonthGrid = ({
       </div>
 
       {/* 날짜 그리드 — 각 행이 동일한 비율로 남은 공간을 채움 */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, padding: '0 6px 6px' }}>
+      <div className="flex-1 flex flex-col min-h-0 px-1.5 pb-1.5">
         {weeks.map((week, weekIndex) => (
           <div
             key={weekIndex}
-            style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', minHeight: 0 }}
+            className="flex-1 grid grid-cols-7 min-h-0"
           >
             {week.map((date) => (
               <MonthDayCell

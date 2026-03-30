@@ -40,6 +40,8 @@ interface ScheduleState {
   readonly editingSchedule: Schedule | null
   /** 폼 모달 열림 여부 */
   readonly isFormOpen: boolean
+  /** 타임라인 클릭 시 사전 입력할 시간 (null이면 기본값 사용) */
+  readonly initialFormTime: { readonly startTime: string; readonly endTime: string } | null
 
   /** 현재 표시 중인 월 (YYYY-MM) */
   readonly currentMonth: string
@@ -73,7 +75,7 @@ interface ScheduleActions {
   /** 완료 상태 토글 */
   readonly toggleComplete: (id: string) => Promise<void>
   /** 폼 모달 열기 (추가 모드) */
-  readonly openAddForm: () => void
+  readonly openAddForm: (initialTime?: { startTime: string; endTime: string }) => void
   /** 폼 모달 열기 (수정 모드) */
   readonly openEditForm: (schedule: Schedule) => void
   /** 폼 모달 닫기 */
@@ -100,6 +102,7 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
   error: null,
   editingSchedule: null,
   isFormOpen: false,
+  initialFormTime: null,
   currentMonth: getCurrentMonth(),
   currentWeekStart: getWeekStart(getToday()),
   monthSchedules: {},
@@ -272,16 +275,16 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     }
   },
 
-  openAddForm: () => {
-    set({ isFormOpen: true, editingSchedule: null })
+  openAddForm: (initialTime) => {
+    set({ isFormOpen: true, editingSchedule: null, initialFormTime: initialTime ?? null })
   },
 
   openEditForm: (schedule: Schedule) => {
-    set({ isFormOpen: true, editingSchedule: schedule })
+    set({ isFormOpen: true, editingSchedule: schedule, initialFormTime: null })
   },
 
   closeForm: () => {
-    set({ isFormOpen: false, editingSchedule: null })
+    set({ isFormOpen: false, editingSchedule: null, initialFormTime: null })
   },
 
   // --- Calendar Actions ---

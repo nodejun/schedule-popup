@@ -103,6 +103,13 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
     [editingSchedule, addSchedule, updateSchedule]
   )
 
+  const handleTimeSlotClick = useCallback(
+    (startTime: string, endTime: string) => {
+      openAddForm({ startTime, endTime })
+    },
+    [openAddForm]
+  )
+
   const handleDeleteSchedule = useCallback(
     async (id: string) => {
       await deleteSchedule(id)
@@ -112,49 +119,23 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
   )
 
   return (
-    <div
-      className="bg-white dark:bg-[#1f1f1f] font-sans"
-      style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}
-    >
+    <div className="bg-white dark:bg-[#1f1f1f] font-sans flex flex-col h-full overflow-hidden break-keep-all">
       {/* ── 상단 헤더 ── */}
-      <div
-        className="bg-white/80 dark:bg-[#1f1f1f]/80"
-        style={{
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 24px',
-          height: '56px',
-          backdropFilter: 'blur(12px)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-        }}
-      >
+      <div className="bg-white/80 dark:bg-[#1f1f1f]/80 shrink-0 flex items-center justify-between px-6 h-14 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+
         <MonthNavigator
           currentMonth={currentMonth}
           onMonthChange={handleMonthChange}
         />
 
         {/* Google Calendar 연결 버튼 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="flex items-center gap-2">
           {!googleAuth.isAuthenticated ? (
             <button
               type="button"
               onClick={connectGoogle}
               aria-label="Google Calendar 연결"
-              className="text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 transition-all duration-200"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 14px',
-                borderRadius: '10px',
-                fontSize: '12px',
-                fontWeight: 500,
-                border: '1px solid #dbeafe',
-                background: 'none',
-                cursor: 'pointer',
-              }}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] text-xs font-medium border border-blue-100 bg-transparent cursor-pointer text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 transition-all duration-200"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -168,19 +149,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
                 onClick={() => syncFromGoogle(currentMonth)}
                 disabled={isGoogleSyncing}
                 aria-label="Google Calendar 동기화"
-                className="text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30 transition-all duration-200 disabled:opacity-50"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '6px 14px',
-                  borderRadius: '10px',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  border: '1px solid #dcfce7',
-                  background: 'none',
-                  cursor: isGoogleSyncing ? 'not-allowed' : 'pointer',
-                }}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] text-xs font-medium border border-green-100 bg-transparent cursor-pointer disabled:cursor-not-allowed text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30 transition-all duration-200 disabled:opacity-50"
               >
                 <svg
                   width="14"
@@ -197,16 +166,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
                 type="button"
                 onClick={disconnectGoogle}
                 aria-label="Google Calendar 연결 해제"
-                className="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: '10px',
-                  fontSize: '11px',
-                  fontWeight: 400,
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
-                }}
+                className="px-2.5 py-1.5 rounded-[10px] text-[11px] font-normal border-none bg-transparent cursor-pointer text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
               >
                 연결 해제
               </button>
@@ -219,19 +179,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
           type="button"
           onClick={onClose}
           aria-label="YouTube로 돌아가기"
-          className="text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-800/60 transition-all duration-200"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            borderRadius: '12px',
-            fontSize: '13px',
-            fontWeight: 500,
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-          }}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium border-none bg-transparent cursor-pointer text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-800/60 transition-all duration-200"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path
@@ -248,16 +196,16 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
 
       {/* 로딩 */}
       {isMonthLoading && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0' }}>
+        <div className="flex items-center justify-center py-12">
           <div className="w-7 h-7 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
       {/* ── 메인 영역: 그리드 + (선택 시) 사이드 패널 ── */}
       {!isMonthLoading && (
-        <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden', background: '#f5f5f5' }}>
+        <div className="flex-1 flex min-h-0 overflow-hidden bg-neutral-100 dark:bg-neutral-900">
           {/* 캘린더 그리드 — 항상 전체 높이 차지 */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <MonthGrid
               currentMonth={currentMonth}
               selectedDate={showDetail ? selectedDate : ''}
@@ -268,14 +216,8 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
 
           {/* 일간 상세 — 오른쪽 사이드 패널 */}
           {showDetail && (
-            <div
-              style={{
-                width: '380px',
-                flexShrink: 0,
-                overflowY: 'auto',
-                padding: '12px',
-              }}
-            >
+            <div className="w-[380px] shrink-0 overflow-y-auto p-3">
+
               <DailyDetailPanel
                 selectedDate={selectedDate}
                 schedules={[...schedules, ...(googleSchedules[selectedDate] ?? [])]}
@@ -285,6 +227,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
                 onToggleComplete={toggleComplete}
                 onOpenAddForm={openAddForm}
                 onClose={handleCloseDetail}
+                onTimeSlotClick={handleTimeSlotClick}
               />
             </div>
           )}
@@ -305,7 +248,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
           onCancel={closeForm}
         />
         {editingSchedule && (
-          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e5e5' }}>
+          <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700">
             <Button
               variant="danger"
               size="sm"

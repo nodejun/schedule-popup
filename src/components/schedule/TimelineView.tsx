@@ -6,10 +6,10 @@
  * 현재 시각을 빨간 가로선으로 표시한다.
  */
 
-import { useState, useEffect } from 'react'
-import type { ReactNode } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import type { ReactNode, MouseEvent } from 'react'
 import type { Schedule } from '@/types/schedule'
-import { timeToMinutes, getTimeSlots, isToday, sortByStartTime } from '@/utils/date-utils'
+import { timeToMinutes, getTimeSlots, isToday, sortByStartTime, minutesToTimeString } from '@/utils/date-utils'
 import { ScheduleCard } from './ScheduleCard'
 
 interface TimelineViewProps {
@@ -19,6 +19,8 @@ interface TimelineViewProps {
   readonly endHour: number
   readonly onEditSchedule: (schedule: Schedule) => void
   readonly onToggleComplete: (id: string) => void
+  /** 타임라인 빈 영역 클릭 시 호출 (시작/종료 시간 전달) */
+  readonly onTimeSlotClick?: (startTime: string, endTime: string) => void
 }
 
 const HOUR_HEIGHT_PX = 60
@@ -30,6 +32,7 @@ export const TimelineView = ({
   endHour,
   onEditSchedule,
   onToggleComplete,
+  onTimeSlotClick,
 }: TimelineViewProps): ReactNode => {
   const [currentMinutes, setCurrentMinutes] = useState(() => {
     const now = new Date()
@@ -64,8 +67,36 @@ export const TimelineView = ({
 
   const sorted = sortByStartTime(schedules)
 
+  /** 타임라인 빈 영역 클릭 → Y좌표를 시간으로 변환 → 콜백 호출 */
+  const handleTimelineClick = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      if (!onTimeSlotClick) return
+      // ScheduleCard 클릭이면 무시 (stopPropagation으로 처리)
+      if (e.target !== e.currentTarget) return
+
+      const rect = e.currentTarget.getBoundingClientRect()
+      const clickY = e.clientY - rect.top + e.currentTarget.scrollTop
+      const totalHeight = timeSlots.length * HOUR_HEIGHT_PX
+      const clickMinutes = startHour * 60 + (clickY / totalHeight) * totalMinutes
+
+      // 30분 단위로 스냅
+      const snappedStart = Math.floor(clickMinutes / 30) * 30
+      const snappedEnd = Math.min(snappedStart + 60, endHour * 60)
+
+      onTimeSlotClick(
+        minutesToTimeString(snappedStart),
+        minutesToTimeString(snappedEnd)
+      )
+    },
+    [onTimeSlotClick, timeSlots.length, startHour, totalMinutes, endHour]
+  )
+
   return (
-    <div className="relative overflow-y-auto" style={{ height: `${timeSlots.length * HOUR_HEIGHT_PX}px` }}>
+    <div
+      className="relative overflow-y-auto cursor-pointer"
+      style={{ height: `${timeSlots.length * HOUR_HEIGHT_PX}px` }}
+      onClick={handleTimelineClick}
+    >
       {/* 시간 눈금 */}
       {timeSlots.map((slot) => (
         <div
@@ -77,13 +108,9 @@ export const TimelineView = ({
           }}
         >
           {/* 시간 구분선 — 얇은 회색 */}
-          <div
-            className="absolute left-12 right-0"
-            style={{ top: 0, height: '1px', background: '#e8e8e8' }}
-          />
-          <span className="absolute left-2 top-0 -translate-y-1/2 text-[11px] text-neutral-400 dark:text-neutral-500 select-none"
-            style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}
-          >
+          <div className="absolute left-12 right-0 top-0 h-px bg-neutral-200 dark:bg-neutral-700" />
+          <span className="absolute left-2 top-0 -translate-y-1/2 text-[11px] text-neutral-400 dark:text-neutral-500 select-none tabular-nums tracking-wide">
+
             {slot}
           </span>
         </div>
@@ -92,21 +119,16 @@ export const TimelineView = ({
       {/* 현재 시각 표시선 — 카드 뒤에 렌더링 (카드에 가려짐) */}
       {isCurrentTimeVisible && (
         <div
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: `${currentTimePercent}%`,
-            pointerEvents: 'none',
-          }}
+          className="absolute inset-x-0 pointer-events-none"
+          style={{ top: `${currentTimePercent}%` }}
         >
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div className="flex items-center">
             {/* 왼쪽 빨간 점 */}
-            <div style={{ width: '48px', display: 'flex', justifyContent: 'flex-end', paddingRight: '2px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
+            <div className="w-12 flex justify-end pr-0.5">
+              <div className="w-2 h-2 rounded-full bg-red-500" />
             </div>
-            {/* 얇은 빨간 선 — 카드가 없는 빈 영역에서만 보임 */}
-            <div style={{ flex: 1, height: '2px', background: '#ef4444' }} />
+            {/* 얇은 빨간 선 */}
+            <div className="flex-1 h-0.5 bg-red-500" />
           </div>
         </div>
       )}

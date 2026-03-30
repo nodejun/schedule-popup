@@ -47,7 +47,7 @@ export const MonthDayCell = ({
       type="button"
       className={[
         'relative flex flex-col items-start gap-1 cursor-pointer',
-        'rounded-2xl p-2',
+        'rounded-2xl p-2 min-h-0',
         'transition-all duration-200',
         isSelected
           ? 'bg-red-50/80 dark:bg-red-900/20 ring-1 ring-red-300/60 dark:ring-red-800/40 shadow-sm'
@@ -57,10 +57,7 @@ export const MonthDayCell = ({
               'hover:ring-neutral-200 dark:hover:ring-neutral-600',
             ].join(' '),
         !inMonth && 'opacity-30',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      style={{ minHeight: 0 }}
+      ].filter(Boolean).join(' ')}
       onClick={() => onClick(date)}
       aria-label={`${date} 일정 ${schedules.length}개`}
     >

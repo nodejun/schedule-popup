@@ -57,7 +57,7 @@ export const App = (): ReactNode => {
       <div className="px-4 pt-4 pb-2">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-lg font-bold">ShortScheduler</h1>
-          <Button variant="primary" size="sm" onClick={openAddForm}>
+          <Button variant="primary" size="sm" onClick={() => openAddForm()}>
             + 추가
           </Button>
         </div>

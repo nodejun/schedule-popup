@@ -13,6 +13,7 @@ import type { Schedule } from '@/types/schedule'
 import { scheduleInputSchema } from '@/schemas/schedule-schema'
 import { isTimeOverlap } from '@/utils/date-utils'
 import { Button } from '../common/Button'
+import { useScheduleStore } from '@/stores/schedule-store'
 import { ColorPicker } from '../common/ColorPicker'
 import { TimeInput } from '../common/TimeInput'
 
@@ -41,12 +42,13 @@ interface FormErrors {
 
 const createInitialState = (
   schedule: Schedule | null,
-  _selectedDate: string
+  _selectedDate: string,
+  initialTime: { startTime: string; endTime: string } | null
 ): FormState => ({
   title: schedule?.title ?? '',
   description: schedule?.description ?? '',
-  startTime: schedule?.startTime ?? '09:00',
-  endTime: schedule?.endTime ?? '10:00',
+  startTime: schedule?.startTime ?? initialTime?.startTime ?? '09:00',
+  endTime: schedule?.endTime ?? initialTime?.endTime ?? '10:00',
   color: schedule?.color ?? 'blue',
 })
 
@@ -57,13 +59,14 @@ export const ScheduleForm = ({
   onSubmit,
   onCancel,
 }: ScheduleFormProps): ReactNode => {
+  const initialFormTime = useScheduleStore((s) => s.initialFormTime)
   const [form, setForm] = useState<FormState>(() =>
-    createInitialState(editingSchedule, selectedDate)
+    createInitialState(editingSchedule, selectedDate, initialFormTime)
   )
   const [errors, setErrors] = useState<FormErrors>({})
 
   useEffect(() => {
-    setForm(createInitialState(editingSchedule, selectedDate))
+    setForm(createInitialState(editingSchedule, selectedDate, initialFormTime))
     setErrors({})
   }, [editingSchedule, selectedDate])
 
