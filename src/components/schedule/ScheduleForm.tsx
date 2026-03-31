@@ -155,33 +155,30 @@ export const ScheduleForm = ({
   const isEditMode = editingSchedule !== null
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {/* 제목 */}
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      {/* 제목 — 큰 입력창 (Google Calendar 스타일) */}
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
-          제목
-        </label>
         <input
           type="text"
           value={form.title}
           onChange={(e) => updateField('title', e.target.value)}
-          placeholder="일정 제목을 입력하세요"
+          placeholder="제목 추가"
           maxLength={100}
-          className={`px-3 py-2 rounded-md border text-sm bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 transition-colors ${
+          className={`px-1 py-2 border-0 border-b-2 text-2xl font-bold bg-transparent text-gray-900 dark:text-neutral-100 placeholder-gray-300 dark:placeholder-neutral-600 transition-all duration-200 focus:outline-none ${
             errors.title
-              ? 'border-red-500 focus:ring-red-500'
-              : 'border-neutral-300 dark:border-neutral-600 focus:ring-blue-500'
-          } focus:outline-none focus:ring-2`}
+              ? 'border-red-500'
+              : 'border-gray-200 dark:border-neutral-600 focus:border-blue-500'
+          }`}
           autoFocus
         />
         {errors.title && (
-          <span className="text-xs text-red-500">{errors.title}</span>
+          <span className="text-sm text-red-500 mt-1">{errors.title}</span>
         )}
       </div>
 
       {/* 설명 */}
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">
           설명 (선택)
         </label>
         <textarea
@@ -190,7 +187,7 @@ export const ScheduleForm = ({
           placeholder="메모를 남겨보세요"
           maxLength={500}
           rows={2}
-          className="px-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-600 text-sm bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-3 rounded-xl border border-gray-200 dark:border-neutral-600 text-base bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
         />
       </div>
 
@@ -217,8 +214,8 @@ export const ScheduleForm = ({
 
       {/* 시간 겹침 경고 */}
       {errors.overlap && (
-        <div className="px-3 py-2 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
-          <span className="text-xs text-yellow-700 dark:text-yellow-400">
+        <div className="px-4 py-2.5 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 ring-1 ring-yellow-200 dark:ring-yellow-800">
+          <span className="text-sm text-yellow-700 dark:text-yellow-400">
             {errors.overlap}
           </span>
         </div>
@@ -226,7 +223,7 @@ export const ScheduleForm = ({
 
       {/* 색상 */}
       <div className="flex flex-col gap-2">
-        <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
+        <label className="text-sm font-medium text-gray-700 dark:text-neutral-300">
           색상
         </label>
         <ColorPicker
@@ -236,11 +233,11 @@ export const ScheduleForm = ({
       </div>
 
       {/* 버튼 */}
-      <div className="flex justify-end gap-2 pt-2">
-        <Button variant="ghost" type="button" onClick={onCancel}>
+      <div className="flex justify-end gap-3 pt-3">
+        <Button variant="ghost" type="button" size="lg" onClick={onCancel}>
           취소
         </Button>
-        <Button variant="primary" type="submit">
+        <Button variant="primary" type="submit" size="lg">
           {isEditMode ? '수정' : '추가'}
         </Button>
       </div>

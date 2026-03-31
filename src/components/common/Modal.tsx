@@ -55,7 +55,7 @@ export const Modal = ({
         <div
           className="flex items-center justify-between px-5 py-4 sticky top-0 bg-inherit z-[1] rounded-t-2xl ring-1 ring-black/5 dark:ring-white/10"
         >
-          <h2 className="text-base m-0 text-gray-900 dark:text-neutral-100 font-bold leading-snug">
+          <h2 className="text-xl m-0 text-gray-900 dark:text-neutral-100 font-bold leading-snug">
             {title}
           </h2>
           <button
