@@ -71,8 +71,6 @@ export const TimelineView = ({
   const handleTimelineClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       if (!onTimeSlotClick) return
-      // ScheduleCard 클릭이면 무시 (stopPropagation으로 처리)
-      if (e.target !== e.currentTarget) return
 
       const rect = e.currentTarget.getBoundingClientRect()
       const clickY = e.clientY - rect.top + e.currentTarget.scrollTop
