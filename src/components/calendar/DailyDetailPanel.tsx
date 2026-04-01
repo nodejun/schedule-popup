@@ -19,7 +19,7 @@ interface DailyDetailPanelProps {
   readonly onClose: () => void
   readonly onTimeSlotClick?: (startTime: string, endTime: string) => void
   /** 미리보기용 시간 (폼이 열려있을 때) */
-  readonly previewTime?: { startTime: string; endTime: string; title?: string } | null
+  readonly previewTime?: { startTime: string; endTime: string; title?: string; color?: string } | null
 }
 
 export const DailyDetailPanel = ({

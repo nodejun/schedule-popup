@@ -6,7 +6,7 @@
  * 현재 시각을 빨간 가로선으로 표시한다.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { ReactNode, MouseEvent } from 'react'
 import type { Schedule } from '@/types/schedule'
 import { timeToMinutes, getTimeSlots, isToday, sortByStartTime, minutesToTimeString } from '@/utils/date-utils'
@@ -26,6 +26,7 @@ interface TimelineViewProps {
     startTime: string
     endTime: string
     title?: string
+    color?: string
   } | null
 }
 
@@ -105,8 +106,24 @@ export const TimelineView = ({
     [onTimeSlotClick, timeSlots.length, startHour, totalMinutes, endHour]
   )
 
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // previewTime이 바뀌면 해당 위치로 스크롤
+  useEffect(() => {
+    if (!previewTime || !containerRef.current) return
+    const pvStart = timeToMinutes(previewTime.startTime)
+    const totalHeight = timeSlots.length * HOUR_HEIGHT_PX
+    const scrollTarget = ((pvStart - startHour * 60) / totalMinutes) * totalHeight - 60
+    // 스크롤 컨테이너는 부모 (overflow-y-auto)
+    const scrollParent = containerRef.current.parentElement
+    if (scrollParent) {
+      scrollParent.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' })
+    }
+  }, [previewTime?.startTime, previewTime?.endTime])
+
   return (
     <div
+      ref={containerRef}
       className="relative overflow-y-auto cursor-pointer"
       style={{ height: `${timeSlots.length * HOUR_HEIGHT_PX}px` }}
       onClick={handleTimelineClick}
@@ -191,21 +208,30 @@ export const TimelineView = ({
         const pvTop = minutesToPercent(pvStart)
         const pvHeight = ((pvEnd - pvStart) / totalMinutes) * 100
         const displayTitle = previewTime.title?.trim() || '(제목 없음)'
+        const previewColors: Record<string, { bg: string; border: string; text: string; sub: string }> = {
+          blue:   { bg: 'bg-blue-50 dark:bg-blue-900/40',     border: '#3b82f6', text: 'text-blue-800 dark:text-blue-200',   sub: 'text-blue-600 dark:text-blue-300' },
+          green:  { bg: 'bg-green-50 dark:bg-green-900/40',   border: '#22c55e', text: 'text-green-800 dark:text-green-200', sub: 'text-green-600 dark:text-green-300' },
+          red:    { bg: 'bg-red-50 dark:bg-red-900/40',       border: '#ef4444', text: 'text-red-800 dark:text-red-200',     sub: 'text-red-600 dark:text-red-300' },
+          yellow: { bg: 'bg-yellow-50 dark:bg-yellow-900/40', border: '#eab308', text: 'text-yellow-800 dark:text-yellow-200', sub: 'text-yellow-600 dark:text-yellow-300' },
+          purple: { bg: 'bg-purple-50 dark:bg-purple-900/40', border: '#a855f7', text: 'text-purple-800 dark:text-purple-200', sub: 'text-purple-600 dark:text-purple-300' },
+          orange: { bg: 'bg-orange-50 dark:bg-orange-900/40', border: '#f97316', text: 'text-orange-800 dark:text-orange-200', sub: 'text-orange-600 dark:text-orange-300' },
+        }
+        const c = previewColors[previewTime.color ?? 'blue'] ?? previewColors['blue']!
         return (
           <div
-            className="absolute left-14 right-2 rounded-xl pointer-events-none overflow-hidden bg-blue-50 dark:bg-blue-900/40"
+            className={`absolute left-14 right-2 rounded-xl pointer-events-none overflow-hidden ${c.bg}`}
             style={{
               top: `${pvTop}%`,
               height: `${Math.max(pvHeight, 2.5)}%`,
               minHeight: '48px',
-              borderLeft: '4px solid #3b82f6',
+              borderLeft: `4px solid ${c.border}`,
               padding: '8px 10px',
             }}
           >
-            <p className="text-[13px] font-semibold text-blue-800 dark:text-blue-200 truncate leading-tight">
+            <p className={`text-[13px] font-semibold truncate leading-tight ${c.text}`}>
               {displayTitle}
             </p>
-            <p className="text-[12px] font-medium text-blue-600 dark:text-blue-300 mt-1 tabular-nums">
+            <p className={`text-[12px] font-medium mt-1 tabular-nums ${c.sub}`}>
               {formatAmPm(previewTime.startTime)} ~ {formatAmPm(previewTime.endTime)}
             </p>
           </div>

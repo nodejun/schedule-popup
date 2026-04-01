@@ -64,7 +64,8 @@ export const TimeInput = ({
   useEffect(() => {
     if (!isOpen) return
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node
+      // Shadow DOM 안에서도 실제 클릭된 요소를 가져오기 위해 composedPath 사용
+      const target = (e.composedPath()[0] ?? e.target) as Node
       if (
         buttonRef.current?.contains(target) ||
         listRef.current?.contains(target)
@@ -73,7 +74,6 @@ export const TimeInput = ({
       }
       setIsOpen(false)
     }
-    // mousedown 대신 click 사용 → 버튼 클릭과 충돌 방지
     document.addEventListener('click', handleClickOutside, true)
     return () => document.removeEventListener('click', handleClickOutside, true)
   }, [isOpen])
@@ -94,16 +94,22 @@ export const TimeInput = ({
       maxHeight: '200px',
     })
     setIsPositioned(true)
+  }, [isOpen])
 
-    requestAnimationFrame(() => {
+  // 드롭다운이 위치 잡힌 후 선택된 시간으로 스크롤
+  useEffect(() => {
+    if (!isPositioned || !listRef.current) return
+    // 약간의 딜레이 후 스크롤 (DOM 렌더링 완료 대기)
+    const timer = setTimeout(() => {
       if (listRef.current) {
-        const selectedEl = listRef.current.querySelector('[data-selected="true"]')
+        const selectedEl = listRef.current.querySelector('[data-selected="true"]') as HTMLElement | null
         if (selectedEl) {
-          selectedEl.scrollIntoView({ block: 'center' })
+          listRef.current.scrollTop = selectedEl.offsetTop - listRef.current.clientHeight / 2 + selectedEl.clientHeight / 2
         }
       }
-    })
-  }, [isOpen])
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [isPositioned])
 
   const handleSelect = (time: string) => {
     onChange(time)

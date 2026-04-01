@@ -8,7 +8,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  timelineStartHour: 6,
+  timelineStartHour: 0,
   timelineEndHour: 24,
   defaultView: 'day',
   theme: 'auto',

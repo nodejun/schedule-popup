@@ -25,6 +25,10 @@ interface ScheduleFormProps {
   readonly onCancel: () => void
   /** 제목 변경 시 부모에게 알림 (미리보기용) */
   readonly onTitleChange?: (title: string) => void
+  /** 색상 변경 시 부모에게 알림 (미리보기용) */
+  readonly onColorChange?: (color: string) => void
+  /** 시간 변경 시 부모에게 알림 (미리보기용) */
+  readonly onTimeChange?: (startTime: string, endTime: string) => void
 }
 
 interface FormState {
@@ -61,6 +65,8 @@ export const ScheduleForm = ({
   onSubmit,
   onCancel,
   onTitleChange,
+  onColorChange,
+  onTimeChange,
 }: ScheduleFormProps): ReactNode => {
   const initialFormTime = useScheduleStore((s) => s.initialFormTime)
   const [form, setForm] = useState<FormState>(() =>
@@ -71,7 +77,11 @@ export const ScheduleForm = ({
   useEffect(() => {
     setForm(createInitialState(editingSchedule, selectedDate, initialFormTime))
     setErrors({})
-  }, [editingSchedule, selectedDate])
+    // initialFormTime이 바뀌면 미리보기도 갱신
+    if (initialFormTime) {
+      onTimeChange?.(initialFormTime.startTime, initialFormTime.endTime)
+    }
+  }, [editingSchedule, selectedDate, initialFormTime])
 
   const updateField = <K extends keyof FormState>(
     field: K,
@@ -203,7 +213,15 @@ export const ScheduleForm = ({
           <TimeInput
             label="시작"
             value={form.startTime}
-            onChange={(t) => updateField('startTime', t)}
+            onChange={(t) => {
+              updateField('startTime', t)
+              // 종료 시간을 시작 + 1시간으로 자동 설정
+              const [hStr, mStr] = t.split(':')
+              const endMinutes = Math.min((parseInt(hStr ?? '0', 10) + 1) * 60 + parseInt(mStr ?? '0', 10), 23 * 60 + 45)
+              const autoEnd = `${String(Math.floor(endMinutes / 60)).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}`
+              updateField('endTime', autoEnd)
+              onTimeChange?.(t, autoEnd)
+            }}
             error={errors.startTime}
           />
         </div>
@@ -211,7 +229,10 @@ export const ScheduleForm = ({
           <TimeInput
             label="종료"
             value={form.endTime}
-            onChange={(t) => updateField('endTime', t)}
+            onChange={(t) => {
+              updateField('endTime', t)
+              onTimeChange?.(form.startTime, t)
+            }}
             min={form.startTime}
             error={errors.endTime}
           />
@@ -234,7 +255,10 @@ export const ScheduleForm = ({
         </label>
         <ColorPicker
           value={form.color}
-          onChange={(c) => updateField('color', c)}
+          onChange={(c) => {
+            updateField('color', c)
+            onColorChange?.(c)
+          }}
         />
       </div>
 

@@ -70,6 +70,9 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
   }
 
   const [previewTitle, setPreviewTitle] = useState('')
+  const [previewColor, setPreviewColor] = useState('blue')
+  const [previewStartTime, setPreviewStartTime] = useState(initialFormTime?.startTime ?? '09:00')
+  const [previewEndTime, setPreviewEndTime] = useState(initialFormTime?.endTime ?? '10:00')
 
   useEffect(() => {
     loadSettings()
@@ -78,16 +81,29 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
     checkAuthAndSync(currentMonth)
   }, [])
 
-  // 폼이 닫히면 미리보기 제목 초기화
+  // 폼이 열리면 초기 시간 반영, 닫히면 초기화
   useEffect(() => {
-    if (!isFormOpen) setPreviewTitle('')
-  }, [isFormOpen])
+    if (isFormOpen && initialFormTime) {
+      setPreviewStartTime(initialFormTime.startTime)
+      setPreviewEndTime(initialFormTime.endTime)
+    }
+    if (!isFormOpen) {
+      setPreviewTitle('')
+      setPreviewColor('blue')
+      setPreviewStartTime('09:00')
+      setPreviewEndTime('10:00')
+    }
+  }, [isFormOpen, initialFormTime])
 
   const handleMonthChange = useCallback(
     (yearMonth: string) => {
       setCurrentMonth(yearMonth)
+      // Google 연결 상태면 해당 월도 동기화
+      if (googleAuth.isAuthenticated) {
+        syncFromGoogle(yearMonth)
+      }
     },
-    [setCurrentMonth]
+    [setCurrentMonth, googleAuth.isAuthenticated, syncFromGoogle]
   )
 
   const handleDateSelect = useCallback(
@@ -252,6 +268,11 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
                   onSubmit={handleSubmitForm}
                   onCancel={closeForm}
                   onTitleChange={setPreviewTitle}
+                  onColorChange={setPreviewColor}
+                  onTimeChange={(start, end) => {
+                    setPreviewStartTime(start)
+                    setPreviewEndTime(end)
+                  }}
                 />
                 {editingSchedule && (
                   <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700">
@@ -288,7 +309,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
                 }}
                 onClose={handleCloseDetail}
                 onTimeSlotClick={handleTimeSlotClick}
-                previewTime={isFormOpen && initialFormTime ? { ...initialFormTime, title: previewTitle } : null}
+                previewTime={isFormOpen ? { startTime: previewStartTime, endTime: previewEndTime, title: previewTitle, color: previewColor } : null}
               />
             </div>
           )}
