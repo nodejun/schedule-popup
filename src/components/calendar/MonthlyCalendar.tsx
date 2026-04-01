@@ -54,6 +54,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
     googleAuth,
     googleSchedules,
     isGoogleSyncing,
+    checkAuthAndSync,
     connectGoogle,
     disconnectGoogle,
     syncFromGoogle,
@@ -73,6 +74,8 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
   useEffect(() => {
     loadSettings()
     fetchMonthSchedules()
+    // 캐시된 Google 토큰이 있으면 자동 연결 + 동기화
+    checkAuthAndSync(currentMonth)
   }, [])
 
   // 폼이 닫히면 미리보기 제목 초기화

@@ -37,6 +37,8 @@ interface GoogleCalendarState {
 // ─────────────────────────────────────────────
 
 interface GoogleCalendarActions {
+  /** 캐시된 토큰으로 자동 인증 확인 + 동기화 (캘린더 열릴 때 호출) */
+  readonly checkAuthAndSync: (yearMonth: string) => Promise<void>
   /** Google 로그인 + 초기 동기화 */
   readonly connectGoogle: () => Promise<void>
   /** Google 로그아웃 */
@@ -60,6 +62,28 @@ export const useGoogleCalendarStore = create<GoogleCalendarStore>(
     syncError: null,
 
     // --- Actions ---
+    checkAuthAndSync: async (yearMonth: string) => {
+      // 이미 인증된 상태면 동기화만
+      if (get().googleAuth.isAuthenticated) {
+        get().syncFromGoogle(yearMonth)
+        return
+      }
+      // 캐시된 토큰 확인 (팝업 없이, interactive: false)
+      try {
+        const token = await getAuthToken(false)
+        set({
+          googleAuth: {
+            isAuthenticated: true,
+            accessToken: token,
+            error: null,
+          },
+        })
+        get().syncFromGoogle(yearMonth)
+      } catch {
+        // 토큰 없음 = 미연결 상태 → 무시 (사용자가 직접 연결해야 함)
+      }
+    },
+
     connectGoogle: async () => {
       try {
         const token = await getAuthToken(true)
