@@ -157,6 +157,16 @@ export const createSchedulerInline = (
     // YouTube 본문 스크롤 잠금 (검증된 패턴: body.style.overflow)
     document.body.style.overflow = 'hidden'
 
+    // 사이드바 링크 클릭 시 스케줄러 닫기
+    const handleSidebarClick = (e: Event): void => {
+      const anchor = (e.target as HTMLElement).closest('a')
+      if (anchor && !anchor.hasAttribute('data-short-scheduler-modified')) {
+        hide()
+      }
+    }
+    document.querySelector('ytd-guide-renderer')?.addEventListener('click', handleSidebarClick)
+    document.querySelector('ytd-mini-guide-renderer')?.addEventListener('click', handleSidebarClick)
+
     // host를 body에 직접 삽입 (YouTube 내부 레이아웃 간섭 방지)
     document.body.appendChild(host)
 

@@ -23,6 +23,8 @@ interface ScheduleFormProps {
   readonly existingSchedules: ReadonlyArray<Schedule>
   readonly onSubmit: (input: ScheduleInput) => void
   readonly onCancel: () => void
+  /** 제목 변경 시 부모에게 알림 (미리보기용) */
+  readonly onTitleChange?: (title: string) => void
 }
 
 interface FormState {
@@ -58,6 +60,7 @@ export const ScheduleForm = ({
   existingSchedules,
   onSubmit,
   onCancel,
+  onTitleChange,
 }: ScheduleFormProps): ReactNode => {
   const initialFormTime = useScheduleStore((s) => s.initialFormTime)
   const [form, setForm] = useState<FormState>(() =>
@@ -120,7 +123,7 @@ export const ScheduleForm = ({
     )
 
     if (hasOverlap) {
-      newErrors.overlap = '다른 일정과 시간이 겹칩니다'
+      newErrors.overlap = '이 시간에 이미 다른 일정이 있습니다. 다른 시간을 선택하세요.'
     }
 
     return newErrors
@@ -161,7 +164,10 @@ export const ScheduleForm = ({
         <input
           type="text"
           value={form.title}
-          onChange={(e) => updateField('title', e.target.value)}
+          onChange={(e) => {
+            updateField('title', e.target.value)
+            onTitleChange?.(e.target.value)
+          }}
           placeholder="제목 추가"
           maxLength={100}
           className={`px-1 py-2 border-0 border-b-2 text-2xl font-bold bg-transparent text-gray-900 dark:text-neutral-100 placeholder-gray-300 dark:placeholder-neutral-600 transition-all duration-200 focus:outline-none ${

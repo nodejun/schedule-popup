@@ -21,6 +21,21 @@ interface TimelineViewProps {
   readonly onToggleComplete: (id: string) => void
   /** 타임라인 빈 영역 클릭 시 호출 (시작/종료 시간 전달) */
   readonly onTimeSlotClick?: (startTime: string, endTime: string) => void
+  /** 미리보기 블록 (폼이 열려있을 때 표시) */
+  readonly previewTime?: {
+    startTime: string
+    endTime: string
+    title?: string
+  } | null
+}
+
+/** "09:00" → "AM 9:00", "14:30" → "PM 2:30" */
+const formatAmPm = (time: string): string => {
+  const [hourStr, minute] = time.split(':')
+  const hour = parseInt(hourStr ?? '0', 10)
+  const period = hour < 12 ? 'AM' : 'PM'
+  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+  return `${period} ${displayHour}:${minute}`
 }
 
 const HOUR_HEIGHT_PX = 60
@@ -33,6 +48,7 @@ export const TimelineView = ({
   onEditSchedule,
   onToggleComplete,
   onTimeSlotClick,
+  previewTime,
 }: TimelineViewProps): ReactNode => {
   const [currentMinutes, setCurrentMinutes] = useState(() => {
     const now = new Date()
@@ -158,8 +174,46 @@ export const TimelineView = ({
         )
       })}
 
+      {/* 미리보기 블록 — 기존 일정과 겹치면 안 보여줌 */}
+      {previewTime && (() => {
+        const pvStart = timeToMinutes(previewTime.startTime)
+        const pvEnd = timeToMinutes(previewTime.endTime)
+
+        // 기존 일정과 겹치는지 확인
+        const hasOverlap = schedules.some((s) => {
+          const sStart = timeToMinutes(s.startTime)
+          const sEnd = timeToMinutes(s.endTime)
+          return pvStart < sEnd && sStart < pvEnd
+        })
+
+        if (hasOverlap) return null
+
+        const pvTop = minutesToPercent(pvStart)
+        const pvHeight = ((pvEnd - pvStart) / totalMinutes) * 100
+        const displayTitle = previewTime.title?.trim() || '(제목 없음)'
+        return (
+          <div
+            className="absolute left-14 right-2 rounded-xl pointer-events-none overflow-hidden bg-blue-50 dark:bg-blue-900/40"
+            style={{
+              top: `${pvTop}%`,
+              height: `${Math.max(pvHeight, 2.5)}%`,
+              minHeight: '48px',
+              borderLeft: '4px solid #3b82f6',
+              padding: '8px 10px',
+            }}
+          >
+            <p className="text-[13px] font-semibold text-blue-800 dark:text-blue-200 truncate leading-tight">
+              {displayTitle}
+            </p>
+            <p className="text-[12px] font-medium text-blue-600 dark:text-blue-300 mt-1 tabular-nums">
+              {formatAmPm(previewTime.startTime)} ~ {formatAmPm(previewTime.endTime)}
+            </p>
+          </div>
+        )
+      })()}
+
       {/* 빈 상태 */}
-      {schedules.length === 0 && (
+      {schedules.length === 0 && !previewTime && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-neutral-400 dark:text-neutral-500">
             <p className="text-sm">일정이 없습니다</p>

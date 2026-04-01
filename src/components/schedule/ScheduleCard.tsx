@@ -8,6 +8,15 @@
 import type { ReactNode } from 'react'
 import type { Schedule, ScheduleColor } from '@/types/schedule'
 
+/** "09:00" → "AM 9:00", "14:30" → "PM 2:30" */
+const formatAmPm = (time: string): string => {
+  const [hourStr, minute] = time.split(':')
+  const hour = parseInt(hourStr ?? '0', 10)
+  const period = hour < 12 ? 'AM' : 'PM'
+  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+  return `${period} ${displayHour}:${minute}`
+}
+
 interface ScheduleCardProps {
   readonly schedule: Schedule
   readonly topPercent: number
@@ -130,15 +139,16 @@ export const ScheduleCard = ({
               {schedule.description}
             </p>
           )}
+
+          {/* 시간 */}
+          <p
+            className={`text-[12px] font-medium mt-1 tabular-nums leading-snug ${colors.text} opacity-70`}
+          >
+            {formatAmPm(schedule.startTime)} ~ {formatAmPm(schedule.endTime)}
+          </p>
         </div>
       </div>
 
-      {/* 하단: 시간 (왼쪽 아래) */}
-      <p
-        className="text-[10px] mt-1 ml-[22px] tabular-nums text-gray-400 dark:text-neutral-500 leading-snug"
-      >
-        {schedule.startTime} – {schedule.endTime}
-      </p>
     </div>
   )
 }

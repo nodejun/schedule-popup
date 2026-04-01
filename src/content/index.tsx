@@ -140,10 +140,13 @@ const init = (): void => {
   const routeObserver = createRouteObserver(handleRouteChange)
   routeObserver.start()
 
-  // 4. 사이드바는 모든 페이지에서 활성화
+  // 4. 사이드바는 모든 페이지에서 활성화 (토글 방식)
   const sidebarInjector = createSidebarInjector(() => {
-    // Schedule 버튼 클릭 → 인라인 스케줄러 표시
-    showScheduler()
+    if (inlineScheduler.isVisible()) {
+      inlineScheduler.hide()
+    } else {
+      showScheduler()
+    }
   })
   sidebarInjector.start()
 }

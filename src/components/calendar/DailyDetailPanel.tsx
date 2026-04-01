@@ -1,8 +1,7 @@
 /**
- * 일간 상세 패널 (YouTube 레드 테마)
+ * 일간 상세 패널
  *
- * 월간 그리드에서 날짜 클릭 시 하단에 표시
- * 기존 TimelineView를 래핑하되 YouTube 스타일 액센트 적용
+ * 타임라인만 표시. 폼은 MonthlyCalendar에서 별도 패널로 처리.
  */
 
 import type { Schedule } from '@/types/schedule'
@@ -19,6 +18,8 @@ interface DailyDetailPanelProps {
   readonly onOpenAddForm: () => void
   readonly onClose: () => void
   readonly onTimeSlotClick?: (startTime: string, endTime: string) => void
+  /** 미리보기용 시간 (폼이 열려있을 때) */
+  readonly previewTime?: { startTime: string; endTime: string; title?: string } | null
 }
 
 export const DailyDetailPanel = ({
@@ -31,14 +32,12 @@ export const DailyDetailPanel = ({
   onOpenAddForm,
   onClose,
   onTimeSlotClick,
+  previewTime,
 }: DailyDetailPanelProps) => {
   return (
-    <div
-      className="bg-white dark:bg-[#252525] rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-white/10 h-full flex flex-col"
-    >
-      {/* 헤더 — 고정 */}
+    <div className="bg-white dark:bg-[#252525] rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-white/10 h-full flex flex-col">
+      {/* 헤더 */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 shrink-0">
-
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -65,7 +64,6 @@ export const DailyDetailPanel = ({
           </div>
         </div>
 
-        {/* 일정 추가 버튼 — YouTube 레드 */}
         <button
           type="button"
           onClick={onOpenAddForm}
@@ -80,7 +78,7 @@ export const DailyDetailPanel = ({
         </button>
       </div>
 
-      {/* 타임라인 — 스크롤 영역 */}
+      {/* 타임라인 */}
       <div className="flex-1 overflow-y-auto min-h-0">
         <TimelineView
           schedules={schedules}
@@ -90,6 +88,7 @@ export const DailyDetailPanel = ({
           onEditSchedule={onEditSchedule}
           onToggleComplete={onToggleComplete}
           onTimeSlotClick={onTimeSlotClick}
+          previewTime={previewTime}
         />
       </div>
     </div>

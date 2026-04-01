@@ -18,9 +18,8 @@ import { useGoogleCalendarStore } from '@/stores/google-calendar-store'
 import { MonthNavigator } from './MonthNavigator'
 import { MonthGrid } from './MonthGrid'
 import { DailyDetailPanel } from './DailyDetailPanel'
-import { Modal } from '@/components/common/Modal'
 import { ScheduleForm } from '@/components/schedule/ScheduleForm'
-import { Button } from '@/components/common/Button'
+import { minutesToTimeString } from '@/utils/date-utils'
 import type { Schedule, ScheduleInput } from '@/types/schedule'
 
 interface MonthlyCalendarProps {
@@ -36,6 +35,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
     isMonthLoading,
     isFormOpen,
     editingSchedule,
+    initialFormTime,
     setCurrentMonth,
     setSelectedDate,
     fetchMonthSchedules,
@@ -68,10 +68,17 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
     mergedMonthSchedules[date] = [...existing, ...googleItems]
   }
 
+  const [previewTitle, setPreviewTitle] = useState('')
+
   useEffect(() => {
     loadSettings()
     fetchMonthSchedules()
   }, [])
+
+  // 폼이 닫히면 미리보기 제목 초기화
+  useEffect(() => {
+    if (!isFormOpen) setPreviewTitle('')
+  }, [isFormOpen])
 
   const handleMonthChange = useCallback(
     (yearMonth: string) => {
@@ -119,7 +126,9 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
   )
 
   return (
-    <div className="bg-white dark:bg-[#1f1f1f] font-sans flex flex-col h-full overflow-hidden break-keep-all">
+    <div
+      className="bg-white dark:bg-[#1f1f1f] font-sans flex flex-col h-full overflow-hidden break-keep-all"
+    >
       {/* ── 상단 헤더 ── */}
       <div className="bg-white/80 dark:bg-[#1f1f1f]/80 shrink-0 flex items-center justify-between px-6 h-14 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
 
@@ -214,10 +223,51 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
             />
           </div>
 
-          {/* 일간 상세 — 오른쪽 사이드 패널 */}
-          {showDetail && (
-            <div className="w-[380px] shrink-0 overflow-y-auto p-3">
+          {/* 인라인 폼 — 타임라인 왼쪽에 별도 패널 */}
+          {showDetail && isFormOpen && (
+            <div className="w-[280px] shrink-0 overflow-y-auto p-3">
+              <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow-sm ring-1 ring-black/10 dark:ring-white/10 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-base font-bold text-gray-900 dark:text-neutral-200">
+                    {editingSchedule ? '일정 수정' : '새 일정'}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={closeForm}
+                    className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-all duration-200"
+                    aria-label="폼 닫기"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+                      <path d="M13.5 4.5L4.5 13.5M4.5 4.5L13.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+                <ScheduleForm
+                  selectedDate={selectedDate}
+                  editingSchedule={editingSchedule}
+                  existingSchedules={schedules}
+                  onSubmit={handleSubmitForm}
+                  onCancel={closeForm}
+                  onTitleChange={setPreviewTitle}
+                />
+                {editingSchedule && (
+                  <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSchedule(editingSchedule.id)}
+                      className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 transition-all duration-200"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
+          {/* 일간 상세 — 타임라인 */}
+          {showDetail && (
+            <div className="w-[380px] shrink-0 overflow-hidden p-3">
               <DailyDetailPanel
                 selectedDate={selectedDate}
                 schedules={[...schedules, ...(googleSchedules[selectedDate] ?? [])]}
@@ -225,40 +275,22 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
                 endHour={settings.timelineEndHour}
                 onEditSchedule={openEditForm}
                 onToggleComplete={toggleComplete}
-                onOpenAddForm={openAddForm}
+                onOpenAddForm={() => {
+                  const now = new Date()
+                  const currentMinutes = Math.floor((now.getHours() * 60 + now.getMinutes()) / 15) * 15
+                  openAddForm({
+                    startTime: minutesToTimeString(currentMinutes),
+                    endTime: minutesToTimeString(Math.min(currentMinutes + 60, 23 * 60 + 45)),
+                  })
+                }}
                 onClose={handleCloseDetail}
                 onTimeSlotClick={handleTimeSlotClick}
+                previewTime={isFormOpen && initialFormTime ? { ...initialFormTime, title: previewTitle } : null}
               />
             </div>
           )}
         </div>
       )}
-
-      {/* 일정 폼 모달 — overflow:hidden 밖에서 렌더링 */}
-      <Modal
-        isOpen={isFormOpen}
-        onClose={closeForm}
-        title={editingSchedule ? '일정 수정' : '일정 추가'}
-      >
-        <ScheduleForm
-          selectedDate={selectedDate}
-          editingSchedule={editingSchedule}
-          existingSchedules={schedules}
-          onSubmit={handleSubmitForm}
-          onCancel={closeForm}
-        />
-        {editingSchedule && (
-          <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700">
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => handleDeleteSchedule(editingSchedule.id)}
-            >
-              삭제
-            </Button>
-          </div>
-        )}
-      </Modal>
     </div>
   )
 }
