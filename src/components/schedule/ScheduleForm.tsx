@@ -11,7 +11,6 @@ import type { ReactNode } from 'react'
 import type { ScheduleInput, ScheduleColor } from '@/types/schedule'
 import type { Schedule } from '@/types/schedule'
 import { scheduleInputSchema } from '@/schemas/schedule-schema'
-import { isTimeOverlap } from '@/utils/date-utils'
 import { Button } from '../common/Button'
 import { useScheduleStore } from '@/stores/schedule-store'
 import { ColorPicker } from '../common/ColorPicker'
@@ -61,7 +60,7 @@ const createInitialState = (
 export const ScheduleForm = ({
   selectedDate,
   editingSchedule,
-  existingSchedules,
+  existingSchedules: _existingSchedules,
   onSubmit,
   onCancel,
   onTitleChange,
@@ -118,22 +117,6 @@ export const ScheduleForm = ({
           newErrors.endTime = issue.message
         }
       }
-    }
-
-    // 시간 겹침 검사 (수정 중인 스케줄은 제외)
-    const othersSchedules = editingSchedule
-      ? existingSchedules.filter((s) => s.id !== editingSchedule.id)
-      : existingSchedules
-
-    const hasOverlap = othersSchedules.some((s) =>
-      isTimeOverlap(
-        { startTime: form.startTime, endTime: form.endTime },
-        { startTime: s.startTime, endTime: s.endTime }
-      )
-    )
-
-    if (hasOverlap) {
-      newErrors.overlap = '이 시간에 이미 다른 일정이 있습니다. 다른 시간을 선택하세요.'
     }
 
     return newErrors

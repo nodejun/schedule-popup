@@ -309,7 +309,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
                 }}
                 onClose={handleCloseDetail}
                 onTimeSlotClick={handleTimeSlotClick}
-                previewTime={isFormOpen ? { startTime: previewStartTime, endTime: previewEndTime, title: previewTitle, color: previewColor } : null}
+                previewTime={isFormOpen && !editingSchedule ? { startTime: previewStartTime, endTime: previewEndTime, title: previewTitle, color: previewColor } : null}
               />
             </div>
           )}

@@ -108,6 +108,23 @@ export const TimelineView = ({
 
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // 타임라인 열릴 때: 일정 있으면 첫 일정, 없으면 현재 시간으로 스크롤
+  useEffect(() => {
+    if (!containerRef.current) return
+    const isCurrentDay = isToday(selectedDate)
+    const targetMinutes = sorted.length > 0
+      ? timeToMinutes(sorted[0]!.startTime)
+      : isCurrentDay
+        ? currentMinutes
+        : 9 * 60  // 오전 9시 기본값
+    const totalHeight = timeSlots.length * HOUR_HEIGHT_PX
+    const scrollTarget = ((targetMinutes - startHour * 60) / totalMinutes) * totalHeight - 40
+    const scrollParent = containerRef.current.parentElement
+    if (scrollParent) {
+      scrollParent.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' })
+    }
+  }, [selectedDate])
+
   // previewTime이 바뀌면 해당 위치로 스크롤
   useEffect(() => {
     if (!previewTime || !containerRef.current) return
@@ -138,10 +155,14 @@ export const TimelineView = ({
             height: `${(1 / timeSlots.length) * 100}%`,
           }}
         >
-          {/* 시간 구분선 — 얇은 회색 */}
-          <div className="absolute left-12 right-0 top-0 h-px bg-neutral-200 dark:bg-neutral-700" />
-          <span className="absolute left-2 top-0 -translate-y-1/2 text-[11px] text-neutral-400 dark:text-neutral-500 select-none tabular-nums tracking-wide">
-
+          {/* 시간 라벨 + 구분선 — 같은 높이에 나란히 */}
+          <div className="absolute left-0 right-0 top-0 flex items-center">
+            <span className="w-[70px] shrink-0 text-right pr-2 text-[11px] text-gray-900 dark:text-neutral-300 select-none tabular-nums font-medium whitespace-nowrap">
+              {formatAmPm(slot)}
+            </span>
+            <div className="flex-1 h-px bg-neutral-200 dark:bg-neutral-700" />
+          </div>
+          <span className="hidden">
             {slot}
           </span>
         </div>
@@ -155,7 +176,7 @@ export const TimelineView = ({
         >
           <div className="flex items-center">
             {/* 왼쪽 빨간 점 */}
-            <div className="w-12 flex justify-end pr-0.5">
+            <div className="w-[70px] flex justify-end pr-0.5">
               <div className="w-2 h-2 rounded-full bg-red-500" />
             </div>
             {/* 얇은 빨간 선 */}
@@ -164,50 +185,53 @@ export const TimelineView = ({
         </div>
       )}
 
-      {/* 스케줄 카드들 */}
-      {sorted.map((schedule) => {
-        const scheduleStart = timeToMinutes(schedule.startTime)
-        const scheduleEnd = timeToMinutes(schedule.endTime)
-        const topPercent = minutesToPercent(scheduleStart)
-        const heightPercent =
-          ((scheduleEnd - scheduleStart) / totalMinutes) * 100
+      {/* 스케줄 카드 + 미리보기 — 겹치는 일정은 나란히 배치 */}
+      {(() => {
+        // 미리보기도 포함한 전체 항목 리스트
+        type Item = { id: string; startTime: string; endTime: string; isPreview: boolean; schedule?: Schedule }
+        const items: Item[] = sorted.map((s) => ({
+          id: s.id, startTime: s.startTime, endTime: s.endTime, isPreview: false, schedule: s,
+        }))
+        if (previewTime) {
+          items.push({
+            id: '__preview__', startTime: previewTime.startTime, endTime: previewTime.endTime, isPreview: true,
+          })
+          items.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))
+        }
 
-        // 현재 시간이 이 카드의 시간 범위 안에 있는지 판별
-        const isNow =
-          isCurrentTimeVisible &&
-          currentMinutes >= scheduleStart &&
-          currentMinutes <= scheduleEnd
+        // 겹침 열 위치 계산
+        const columns: { item: Item; col: number; totalCols: number }[] = []
+        const active: { end: number; col: number }[] = []
 
-        return (
-          <ScheduleCard
-            key={schedule.id}
-            schedule={schedule}
-            topPercent={topPercent}
-            heightPercent={heightPercent}
-            isNow={isNow}
-            onEdit={onEditSchedule}
-            onToggleComplete={onToggleComplete}
-          />
-        )
-      })}
+        for (const item of items) {
+          const sStart = timeToMinutes(item.startTime)
+          const sEnd = timeToMinutes(item.endTime)
+          const stillActive = active.filter((a) => a.end > sStart)
+          const usedCols = new Set(stillActive.map((a) => a.col))
+          let col = 0
+          while (usedCols.has(col)) col++
+          stillActive.push({ end: sEnd, col })
+          active.length = 0
+          active.push(...stillActive)
+          columns.push({ item, col, totalCols: 0 })
+        }
 
-      {/* 미리보기 블록 — 기존 일정과 겹치면 안 보여줌 */}
-      {previewTime && (() => {
-        const pvStart = timeToMinutes(previewTime.startTime)
-        const pvEnd = timeToMinutes(previewTime.endTime)
+        // totalCols 계산
+        for (let i = 0; i < columns.length; i++) {
+          const curr = columns[i]!
+          const currStart = timeToMinutes(curr.item.startTime)
+          const currEnd = timeToMinutes(curr.item.endTime)
+          let maxCol = curr.col
+          for (const other of columns) {
+            const oStart = timeToMinutes(other.item.startTime)
+            const oEnd = timeToMinutes(other.item.endTime)
+            if (currStart < oEnd && oStart < currEnd) {
+              maxCol = Math.max(maxCol, other.col)
+            }
+          }
+          columns[i] = { ...curr, totalCols: maxCol + 1 }
+        }
 
-        // 기존 일정과 겹치는지 확인
-        const hasOverlap = schedules.some((s) => {
-          const sStart = timeToMinutes(s.startTime)
-          const sEnd = timeToMinutes(s.endTime)
-          return pvStart < sEnd && sStart < pvEnd
-        })
-
-        if (hasOverlap) return null
-
-        const pvTop = minutesToPercent(pvStart)
-        const pvHeight = ((pvEnd - pvStart) / totalMinutes) * 100
-        const displayTitle = previewTime.title?.trim() || '(제목 없음)'
         const previewColors: Record<string, { bg: string; border: string; text: string; sub: string }> = {
           blue:   { bg: 'bg-blue-50 dark:bg-blue-900/40',     border: '#3b82f6', text: 'text-blue-800 dark:text-blue-200',   sub: 'text-blue-600 dark:text-blue-300' },
           green:  { bg: 'bg-green-50 dark:bg-green-900/40',   border: '#22c55e', text: 'text-green-800 dark:text-green-200', sub: 'text-green-600 dark:text-green-300' },
@@ -216,26 +240,66 @@ export const TimelineView = ({
           purple: { bg: 'bg-purple-50 dark:bg-purple-900/40', border: '#a855f7', text: 'text-purple-800 dark:text-purple-200', sub: 'text-purple-600 dark:text-purple-300' },
           orange: { bg: 'bg-orange-50 dark:bg-orange-900/40', border: '#f97316', text: 'text-orange-800 dark:text-orange-200', sub: 'text-orange-600 dark:text-orange-300' },
         }
-        const c = previewColors[previewTime.color ?? 'blue'] ?? previewColors['blue']!
-        return (
-          <div
-            className={`absolute left-14 right-2 rounded-xl pointer-events-none overflow-hidden ${c.bg}`}
-            style={{
-              top: `${pvTop}%`,
-              height: `${Math.max(pvHeight, 2.5)}%`,
-              minHeight: '48px',
-              borderLeft: `4px solid ${c.border}`,
-              padding: '8px 10px',
-            }}
-          >
-            <p className={`text-[13px] font-semibold truncate leading-tight ${c.text}`}>
-              {displayTitle}
-            </p>
-            <p className={`text-[12px] font-medium mt-1 tabular-nums ${c.sub}`}>
-              {formatAmPm(previewTime.startTime)} ~ {formatAmPm(previewTime.endTime)}
-            </p>
-          </div>
-        )
+
+        return columns.map(({ item, col, totalCols }) => {
+          const itemStart = timeToMinutes(item.startTime)
+          const itemEnd = timeToMinutes(item.endTime)
+          const topPct = minutesToPercent(itemStart)
+          const heightPct = ((itemEnd - itemStart) / totalMinutes) * 100
+
+          if (item.isPreview && previewTime) {
+            // 미리보기 블록 (나란히 배치 적용)
+            const displayTitle = previewTime.title?.trim() || '(제목 없음)'
+            const c = previewColors[previewTime.color ?? 'blue'] ?? previewColors['blue']!
+            const leftBase = 70
+            const rightGap = 8
+            const colWidthPct = 100 / totalCols
+            const colLeft = col * colWidthPct
+            return (
+              <div
+                key="__preview__"
+                className={`absolute rounded-xl pointer-events-none overflow-hidden ${c.bg}`}
+                style={{
+                  top: `${topPct}%`,
+                  height: `${Math.max(heightPct, 2.5)}%`,
+                  minHeight: '48px',
+                  borderLeft: `4px solid ${c.border}`,
+                  padding: '8px 10px',
+                  left: `calc(${leftBase}px + (100% - ${leftBase}px - ${rightGap}px) * ${colLeft / 100})`,
+                  width: `calc((100% - ${leftBase}px - ${rightGap}px) * ${colWidthPct / 100} - 2px)`,
+                }}
+              >
+                <p className={`text-[13px] font-semibold truncate leading-tight ${c.text}`}>
+                  {displayTitle}
+                </p>
+                <p className={`text-[12px] font-medium mt-1 tabular-nums ${c.sub}`}>
+                  {formatAmPm(previewTime.startTime)} ~ {formatAmPm(previewTime.endTime)}
+                </p>
+              </div>
+            )
+          }
+
+          // 일반 스케줄 카드
+          const schedule = item.schedule!
+          const isNow =
+            isCurrentTimeVisible &&
+            currentMinutes >= itemStart &&
+            currentMinutes <= itemEnd
+
+          return (
+            <ScheduleCard
+              key={schedule.id}
+              schedule={schedule}
+              topPercent={topPct}
+              heightPercent={heightPct}
+              isNow={isNow}
+              onEdit={onEditSchedule}
+              onToggleComplete={onToggleComplete}
+              columnIndex={col}
+              totalColumns={totalCols}
+            />
+          )
+        })
       })()}
 
       {/* 빈 상태 */}

@@ -24,6 +24,10 @@ interface ScheduleCardProps {
   readonly isNow: boolean
   readonly onEdit: (schedule: Schedule) => void
   readonly onToggleComplete: (id: string) => void
+  /** 겹치는 일정 중 몇 번째 열인지 (0부터) */
+  readonly columnIndex?: number
+  /** 겹치는 일정의 총 열 수 */
+  readonly totalColumns?: number
 }
 
 const colorStyles: Record<ScheduleColor, { bg: string; borderColor: string; text: string }> = {
@@ -66,16 +70,24 @@ export const ScheduleCard = ({
   isNow,
   onEdit,
   onToggleComplete,
+  columnIndex = 0,
+  totalColumns = 1,
 }: ScheduleCardProps): ReactNode => {
   const colors = colorStyles[schedule.color]
   const minHeight = Math.max(heightPercent, 2.5) // 최소 높이 보장
 
   const hasDescription = schedule.description && schedule.description.trim().length > 0
 
+  // 겹치는 일정 나란히 배치: left와 width 계산
+  const leftBase = 70 // AM/PM 시간 라벨 너비
+  const rightGap = 8  // right-2 = 0.5rem = 8px
+  const colWidthPercent = 100 / totalColumns
+  const colLeft = columnIndex * colWidthPercent
+
   return (
     <div
       className={[
-        'absolute left-14 right-2 cursor-pointer overflow-hidden',
+        'absolute cursor-pointer overflow-hidden',
         'rounded-xl transition-all duration-200 hover:scale-[1.02]',
         'min-h-9 px-2.5 py-2 flex flex-col justify-between',
         colors.bg,
@@ -86,6 +98,8 @@ export const ScheduleCard = ({
         top: `${topPercent}%`,
         height: `${minHeight}%`,
         borderLeft: `4px solid ${isNow ? '#ef4444' : colors.borderColor}`,
+        left: `calc(${leftBase}px + (100% - ${leftBase}px - ${rightGap}px) * ${colLeft / 100})`,
+        width: `calc((100% - ${leftBase}px - ${rightGap}px) * ${colWidthPercent / 100} - 2px)`,
       }}
       onClick={(e) => {
         e.stopPropagation()
