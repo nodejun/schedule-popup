@@ -9,12 +9,12 @@
 
 import { create } from 'zustand'
 import type { Schedule } from '@/types/schedule'
-import type { GoogleAuthState } from '@/types/google-calendar'
+import type { GoogleAuthState, GoogleCalendarInfo } from '@/types/google-calendar'
 import {
   getAuthToken,
   removeAuthToken,
 } from '@/services/google-auth'
-import { getEvents } from '@/services/google-calendar-api'
+import { getEvents, getCalendarList } from '@/services/google-calendar-api'
 import { googleEventsToSchedules } from '@/utils/schedule-converter'
 
 // ─────────────────────────────────────────────
@@ -30,6 +30,8 @@ interface GoogleCalendarState {
   readonly isGoogleSyncing: boolean
   /** 동기화 에러 메시지 */
   readonly syncError: string | null
+  /** 사용자의 Google 캘린더 목록 (개인, 회사, 생일 등) */
+  readonly calendarList: ReadonlyArray<GoogleCalendarInfo>
 }
 
 // ─────────────────────────────────────────────
@@ -45,6 +47,8 @@ interface GoogleCalendarActions {
   readonly disconnectGoogle: () => Promise<void>
   /** Google에서 특정 기간의 일정 가져오기 */
   readonly syncFromGoogle: (yearMonth: string) => Promise<void>
+  /** 캘린더 목록 가져오기 */
+  readonly fetchCalendarList: () => Promise<void>
 }
 
 export type GoogleCalendarStore = GoogleCalendarState & GoogleCalendarActions
@@ -60,12 +64,14 @@ export const useGoogleCalendarStore = create<GoogleCalendarStore>(
     googleSchedules: {},
     isGoogleSyncing: false,
     syncError: null,
+    calendarList: [],
 
     // --- Actions ---
     checkAuthAndSync: async (yearMonth: string) => {
       // 이미 인증된 상태면 동기화만
       if (get().googleAuth.isAuthenticated) {
         get().syncFromGoogle(yearMonth)
+        get().fetchCalendarList()
         return
       }
       // 캐시된 토큰 확인 (팝업 없이, interactive: false)
@@ -79,6 +85,7 @@ export const useGoogleCalendarStore = create<GoogleCalendarStore>(
           },
         })
         get().syncFromGoogle(yearMonth)
+        get().fetchCalendarList()
       } catch {
         // 토큰 없음 = 미연결 상태 → 무시 (사용자가 직접 연결해야 함)
       }
@@ -153,6 +160,16 @@ export const useGoogleCalendarStore = create<GoogleCalendarStore>(
         const message =
           err instanceof Error ? err.message : 'Google 동기화 실패'
         set({ syncError: message, isGoogleSyncing: false })
+      }
+    },
+
+    fetchCalendarList: async () => {
+      if (!get().googleAuth.isAuthenticated) return
+      try {
+        const list = await getCalendarList()
+        set({ calendarList: list })
+      } catch {
+        // 실패해도 무시 — 캘린더 목록은 필수가 아님
       }
     },
   })

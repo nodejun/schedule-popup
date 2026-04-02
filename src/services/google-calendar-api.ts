@@ -14,6 +14,8 @@ import type {
   GoogleCalendarEvent,
   GoogleCalendarListResponse,
   GoogleEventInput,
+  GoogleCalendarInfo,
+  GoogleCalendarListApiResponse,
 } from '@/types/google-calendar'
 
 /** Google Calendar API 기본 URL */
@@ -148,4 +150,30 @@ export const deleteEvent = async (
   if (!response.ok) {
     throw new Error(`이벤트 삭제 실패: ${response.status}`)
   }
+}
+
+// ─────────────────────────────────────────────
+// 캘린더 목록 (Calendar List)
+// ─────────────────────────────────────────────
+
+/**
+ * 사용자의 Google 캘린더 목록을 가져온다.
+ *
+ * 개인, 회사, 생일 등 사용자가 가진 모든 캘린더를 반환.
+ * 각 캘린더의 id를 이벤트 생성 시 calendarId로 사용할 수 있다.
+ *
+ * @returns 캘린더 목록 (id, summary, backgroundColor, primary 등)
+ *
+ * NestJS 비유: GET /calendar/list
+ */
+export const getCalendarList = async (): Promise<ReadonlyArray<GoogleCalendarInfo>> => {
+  const url = `${BASE_URL}/users/me/calendarList`
+  const response = await fetchWithAuth(url)
+
+  if (!response.ok) {
+    throw new Error(`캘린더 목록 조회 실패: ${response.status}`)
+  }
+
+  const data: GoogleCalendarListApiResponse = await response.json()
+  return data.items ?? []
 }

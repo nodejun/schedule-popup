@@ -22,6 +22,8 @@ export const scheduleInputSchema = z
     startTime: timeSchema,
     endTime: timeSchema,
     color: z.enum(SCHEDULE_COLORS).optional().default('blue'),
+    calendarId: z.string().optional(),
+    recurrence: z.string().nullable().optional(),
   })
   .refine((data) => data.startTime < data.endTime, {
     message: '시작 시간이 종료 시간보다 빨라야 합니다',

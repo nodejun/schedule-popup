@@ -101,6 +101,7 @@ export const googleEventToSchedule = (event: GoogleCalendarEvent): Schedule => (
   isCompleted: event.status === 'cancelled',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+  recurrence: event.recurrence?.[0] ?? null,
 })
 
 /**
@@ -138,4 +139,5 @@ export const scheduleToGoogleEvent = (input: ScheduleInput): GoogleEventInput =>
     timeZone: 'Asia/Seoul',
   },
   colorId: SCHEDULE_COLOR_TO_GOOGLE[input.color ?? 'blue'],
+  ...(input.recurrence ? { recurrence: [input.recurrence] } : {}),
 })

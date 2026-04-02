@@ -41,6 +41,10 @@ export interface GoogleCalendarEvent {
   readonly location?: string
   /** HTML 링크 (Google Calendar에서 열기) */
   readonly htmlLink?: string
+  /** 반복 규칙 배열 (예: ['RRULE:FREQ=WEEKLY;BYDAY=MO']) */
+  readonly recurrence?: ReadonlyArray<string>
+  /** 반복 이벤트의 원본 ID */
+  readonly recurringEventId?: string
 }
 
 /** Google Calendar API - Events.list 응답 */
@@ -71,6 +75,31 @@ export interface GoogleEventInput {
   readonly colorId?: string
   /** 이벤트 위치 */
   readonly location?: string
+  /** 반복 규칙 배열 (예: ['RRULE:FREQ=YEARLY']) */
+  readonly recurrence?: ReadonlyArray<string>
+}
+
+// ─────────────────────────────────────────────
+// 캘린더 목록 타입
+// ─────────────────────────────────────────────
+
+/** Google Calendar 캘린더 정보 (calendarList.list 응답) */
+export interface GoogleCalendarInfo {
+  /** 캘린더 ID (이메일 형식 또는 고유 ID) */
+  readonly id: string
+  /** 캘린더 이름 ("개인", "회사" 등) */
+  readonly summary: string
+  /** 배경 색상 (hex) */
+  readonly backgroundColor?: string
+  /** 주 캘린더 여부 */
+  readonly primary?: boolean
+  /** 접근 권한 (reader, writer, owner) */
+  readonly accessRole?: string
+}
+
+/** Google Calendar 캘린더 목록 응답 */
+export interface GoogleCalendarListApiResponse {
+  readonly items: ReadonlyArray<GoogleCalendarInfo>
 }
 
 // ─────────────────────────────────────────────
