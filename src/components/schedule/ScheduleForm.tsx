@@ -13,6 +13,7 @@ import type { Schedule } from '@/types/schedule'
 import { scheduleInputSchema } from '@/schemas/schedule-schema'
 import { Button } from '../common/Button'
 import { useScheduleStore } from '@/stores/schedule-store'
+import { useGoogleCalendarStore } from '@/stores/google-calendar-store'
 import { ColorPicker } from '../common/ColorPicker'
 import { TimeInput } from '../common/TimeInput'
 
@@ -36,14 +37,25 @@ interface FormState {
   readonly startTime: string
   readonly endTime: string
   readonly color: ScheduleColor
+  readonly calendarId: string
+  readonly recurrence: string | null
 }
 
 interface FormErrors {
   title?: string
   startTime?: string
   endTime?: string
-  overlap?: string
+  general?: string
 }
+
+/** 반복 옵션 */
+const RECURRENCE_OPTIONS = [
+  { value: '', label: '안 함' },
+  { value: 'RRULE:FREQ=DAILY', label: '매일' },
+  { value: 'RRULE:FREQ=WEEKLY', label: '매주' },
+  { value: 'RRULE:FREQ=MONTHLY', label: '매월' },
+  { value: 'RRULE:FREQ=YEARLY', label: '매년 (생일/기념일)' },
+] as const
 
 const createInitialState = (
   schedule: Schedule | null,
@@ -55,6 +67,8 @@ const createInitialState = (
   startTime: schedule?.startTime ?? initialTime?.startTime ?? '09:00',
   endTime: schedule?.endTime ?? initialTime?.endTime ?? '10:00',
   color: schedule?.color ?? 'blue',
+  calendarId: schedule?.calendarId ?? 'primary',
+  recurrence: schedule?.recurrence ?? null,
 })
 
 export const ScheduleForm = ({
@@ -68,6 +82,7 @@ export const ScheduleForm = ({
   onTimeChange,
 }: ScheduleFormProps): ReactNode => {
   const initialFormTime = useScheduleStore((s) => s.initialFormTime)
+  const { googleAuth, calendarList } = useGoogleCalendarStore()
   const [form, setForm] = useState<FormState>(() =>
     createInitialState(editingSchedule, selectedDate, initialFormTime)
   )
@@ -88,7 +103,7 @@ export const ScheduleForm = ({
   ) => {
     setForm((prev) => ({ ...prev, [field]: value }))
     // 입력 시 해당 필드 에러 클리어
-    setErrors((prev) => ({ ...prev, [field]: undefined, overlap: undefined }))
+    setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }))
   }
 
   const validate = (): FormErrors => {
@@ -138,13 +153,15 @@ export const ScheduleForm = ({
       startTime: form.startTime,
       endTime: form.endTime,
       color: form.color,
+      calendarId: form.calendarId || undefined,
+      recurrence: form.recurrence || null,
     }
 
     try {
       await onSubmit(input)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      setErrors({ overlap: `수정 실패: ${msg}` })
+      setErrors({ general: `수정 실패: ${msg}` })
     }
   }
 
@@ -223,13 +240,55 @@ export const ScheduleForm = ({
       </div>
 
       {/* 시간 겹침 경고 */}
-      {errors.overlap && (
+      {errors.general && (
         <div className="px-4 py-2.5 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 ring-1 ring-yellow-200 dark:ring-yellow-800">
           <span className="text-sm text-yellow-700 dark:text-yellow-400">
-            {errors.overlap}
+            {errors.general}
           </span>
         </div>
       )}
+
+      {/* 캘린더 선택 — Google 연결 시 표시 */}
+      {googleAuth.isAuthenticated && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">
+            캘린더
+          </label>
+          <select
+            value={form.calendarId}
+            onChange={(e) => updateField('calendarId', e.target.value)}
+            className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-600 text-base bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          >
+            {calendarList.length > 0 ? (
+              calendarList.map((cal) => (
+                <option key={cal.id} value={cal.id}>
+                  {cal.primary ? `${cal.summary} (기본)` : cal.summary}
+                </option>
+              ))
+            ) : (
+              <option value="primary">개인 (기본)</option>
+            )}
+          </select>
+        </div>
+      )}
+
+      {/* 반복 선택 */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">
+          반복
+        </label>
+        <select
+          value={form.recurrence ?? ''}
+          onChange={(e) => updateField('recurrence', e.target.value || null)}
+          className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-600 text-base bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+        >
+          {RECURRENCE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* 색상 */}
       <div className="flex flex-col gap-2">

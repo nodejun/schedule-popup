@@ -167,7 +167,11 @@ export const useGoogleCalendarStore = create<GoogleCalendarStore>(
       if (!get().googleAuth.isAuthenticated) return
       try {
         const list = await getCalendarList()
-        set({ calendarList: list })
+        // 쓰기 가능한 캘린더만 필터링 (owner, writer)
+        const writable = list.filter(
+          (cal) => cal.accessRole === 'owner' || cal.accessRole === 'writer'
+        )
+        set({ calendarList: writable })
       } catch {
         // 실패해도 무시 — 캘린더 목록은 필수가 아님
       }
