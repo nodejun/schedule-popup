@@ -18,8 +18,14 @@ import {
   toggleComplete as repoToggle,
 } from '@/storage/schedule-repository'
 import { getToday } from '@/utils/date-utils'
-import { createEvent, updateEvent, deleteEvent } from '@/services/google-calendar-api'
+import {
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  getEvent,
+} from '@/services/google-calendar-api'
 import { scheduleToGoogleEvent } from '@/utils/schedule-converter'
+import { buildUntilRrule } from '@/utils/recurrence-utils'
 import { useGoogleCalendarStore } from './google-calendar-store'
 import {
   getCurrentMonth,
@@ -27,6 +33,47 @@ import {
   getMonthGridAllDates,
   getWeekStart,
 } from '@/utils/calendar-utils'
+
+/**
+ * 반복 일정 삭제 모드
+ *
+ * - 'instance': 이 일정만 (Google이 EXDATE로 처리)
+ * - 'future':   이 일정과 이후 모든 반복 (RRULE에 UNTIL 추가)
+ * - 'all':      모든 반복 일정 (부모 이벤트 통째로 삭제)
+ *
+ * 단일 일정에는 의미가 없으며 'instance'와 동일하게 동작한다.
+ */
+export type DeleteMode = 'instance' | 'future' | 'all'
+
+/**
+ * ID로 Schedule을 찾는다 — 로컬 + Google 양쪽을 모두 검색.
+ *
+ * 로컬 schedules 배열은 선택된 날짜의 일정만 들고 있고,
+ * Google 일정은 별도 store의 googleSchedules 맵에 날짜별로 저장돼 있어서
+ * 두 곳을 다 뒤져야 한다.
+ *
+ * @param id - 찾을 스케줄 ID ('google_' 접두사 포함 가능)
+ * @param localSchedules - 현재 선택 날짜의 로컬 스케줄 배열
+ * @param googleSchedulesMap - Google 스케줄 맵 (date → schedules)
+ * @returns 찾은 Schedule 또는 undefined
+ */
+const findScheduleById = (
+  id: string,
+  localSchedules: ReadonlyArray<Schedule>,
+  googleSchedulesMap: Readonly<Record<string, ReadonlyArray<Schedule>>>
+): Schedule | undefined => {
+  // 1. 로컬 schedules에서 우선 검색
+  const local = localSchedules.find((s) => s.id === id)
+  if (local) return local
+
+  // 2. Google schedules 맵의 모든 값에서 검색
+  for (const dateSchedules of Object.values(googleSchedulesMap)) {
+    const found = dateSchedules.find((s) => s.id === id)
+    if (found) return found
+  }
+
+  return undefined
+}
 interface ScheduleState {
   /** 현재 선택된 날짜 (YYYY-MM-DD) */
   readonly selectedDate: string
@@ -70,8 +117,16 @@ interface ScheduleActions {
     id: string,
     patch: Partial<ScheduleInput>
   ) => Promise<void>
-  /** 스케줄 삭제 */
-  readonly deleteSchedule: (id: string) => Promise<void>
+  /**
+   * 스케줄 삭제
+   *
+   * @param id - 삭제할 스케줄 ID
+   * @param mode - 반복 일정일 때의 삭제 모드 (기본: 'instance')
+   *               - 'instance': 이 일정만 (단일 일정도 동일)
+   *               - 'future':   이 일정과 향후 모든 반복
+   *               - 'all':      모든 반복 일정 (부모 통째 삭제)
+   */
+  readonly deleteSchedule: (id: string, mode?: DeleteMode) => Promise<void>
   /** 완료 상태 토글 */
   readonly toggleComplete: (id: string) => Promise<void>
   /** 폼 모달 열기 (추가 모드) */
@@ -142,8 +197,8 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
       const { googleAuth, syncFromGoogle } = useGoogleCalendarStore.getState()
 
       if (googleAuth.isAuthenticated) {
-        // Google 연결 시 → Google에만 저장
-        await createEvent(scheduleToGoogleEvent(input))
+        // Google 연결 시 → 선택한 캘린더에 저장 (recurrence 포함)
+        await createEvent(scheduleToGoogleEvent(input), input.calendarId ?? 'primary')
         // Google에서 다시 가져오기
         await syncFromGoogle(get().currentMonth)
       } else {
@@ -169,15 +224,16 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
       const { googleAuth, syncFromGoogle } = useGoogleCalendarStore.getState()
 
       if (googleAuth.isAuthenticated) {
-        // Google 연결 시 → Google에서만 수정
+        // Google 연결 시 → 선택한 캘린더에서 수정
         const googleEventId = id.startsWith('google_') ? id.replace('google_', '') : id
+        const calendarId = patch.calendarId ?? 'primary'
         await updateEvent(googleEventId, scheduleToGoogleEvent({
           title: patch.title ?? '',
           date: patch.date ?? selectedDate,
           startTime: patch.startTime ?? '00:00',
           endTime: patch.endTime ?? '23:59',
           ...patch,
-        } as ScheduleInput))
+        } as ScheduleInput), calendarId)
         await syncFromGoogle(get().currentMonth)
       } else {
         // 미연결 시 → 로컬에서만 수정
@@ -200,19 +256,60 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     }
   },
 
-  deleteSchedule: async (id: string) => {
+  deleteSchedule: async (id: string, mode: DeleteMode = 'instance') => {
     const { selectedDate } = get()
     set({ isLoading: true, error: null })
     try {
-      const { googleAuth, syncFromGoogle } = useGoogleCalendarStore.getState()
+      const { googleAuth, googleSchedules, syncFromGoogle } =
+        useGoogleCalendarStore.getState()
 
       if (googleAuth.isAuthenticated) {
-        // Google 연결 시 → Google에서만 삭제
-        const googleEventId = id.startsWith('google_') ? id.replace('google_', '') : id
-        await deleteEvent(googleEventId)
+        // 1. 현재 화면에 있는 모든 일정에서 target 찾기
+        //    (로컬 schedules + Google schedules 둘 다 뒤져야 함)
+        const target = findScheduleById(id, get().schedules, googleSchedules)
+        if (!target) {
+          throw new Error('삭제할 일정을 찾을 수 없습니다')
+        }
+
+        // 2. Google에 보낼 ID 정리 ('google_' 접두사 제거)
+        const googleEventId = id.startsWith('google_')
+          ? id.replace('google_', '')
+          : id
+        const calendarId = target.calendarId ?? 'primary'
+        const isRecurringInstance = !!target.recurringEventId
+
+        // 3. 분기 처리
+        if (!isRecurringInstance || mode === 'instance') {
+          // 단일 일정 또는 "이 일정만" — 인스턴스 ID로 직접 삭제
+          // (Google이 알아서 EXDATE로 처리)
+          await deleteEvent(googleEventId, calendarId)
+        } else if (mode === 'all') {
+          // "모든 반복 일정" — 부모 이벤트 통째로 삭제
+          await deleteEvent(target.recurringEventId!, calendarId)
+        } else {
+          // "이 일정과 향후" — 부모를 GET해서 RRULE에 UNTIL 추가, PATCH
+          const parent = await getEvent(target.recurringEventId!, calendarId)
+          const originalRrule = parent.recurrence?.[0]
+          if (!originalRrule) {
+            throw new Error(
+              '부모 이벤트의 반복 규칙(RRULE)을 찾을 수 없습니다'
+            )
+          }
+          const newRrule = buildUntilRrule(
+            originalRrule,
+            target.date,
+            target.startTime
+          )
+          await updateEvent(
+            target.recurringEventId!,
+            { recurrence: [newRrule] },
+            calendarId
+          )
+        }
+
         await syncFromGoogle(get().currentMonth)
       } else {
-        // 미연결 시 → 로컬에서만 삭제
+        // Google 미연결 시 → 로컬에서만 삭제 (mode 무시)
         await repoDelete(selectedDate, id)
       }
 

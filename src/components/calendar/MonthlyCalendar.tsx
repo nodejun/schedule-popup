@@ -13,12 +13,14 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useScheduleStore } from '@/stores/schedule-store'
+import type { DeleteMode } from '@/stores/schedule-store'
 import { useSettingsStore } from '@/stores/settings-store'
 import { useGoogleCalendarStore } from '@/stores/google-calendar-store'
 import { MonthNavigator } from './MonthNavigator'
 import { MonthGrid } from './MonthGrid'
 import { DailyDetailPanel } from './DailyDetailPanel'
 import { ScheduleForm } from '@/components/schedule/ScheduleForm'
+import { RecurringDeleteDialog } from '@/components/schedule/RecurringDeleteDialog'
 import { minutesToTimeString } from '@/utils/date-utils'
 import type { Schedule, ScheduleInput } from '@/types/schedule'
 
@@ -61,6 +63,8 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
   } = useGoogleCalendarStore()
 
   const [showDetail, setShowDetail] = useState(false)
+  /** 반복 일정 삭제 다이얼로그 표시 여부 */
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   // 로컬 스케줄 + Google 스케줄 합치기
   const mergedMonthSchedules: Record<string, ReadonlyArray<Schedule>> = { ...monthSchedules }
@@ -136,12 +140,33 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
     [openAddForm]
   )
 
+  /**
+   * 삭제 버튼 클릭:
+   * - 반복 일정의 인스턴스라면 → 다이얼로그 표시 (3옵션 선택)
+   * - 단일 일정이라면          → 즉시 삭제
+   */
   const handleDeleteSchedule = useCallback(
     async (id: string) => {
+      const target = editingSchedule
+      if (target?.recurringEventId) {
+        setShowDeleteDialog(true)
+        return
+      }
       await deleteSchedule(id)
       closeForm()
     },
-    [deleteSchedule, closeForm]
+    [editingSchedule, deleteSchedule, closeForm]
+  )
+
+  /** 다이얼로그에서 모드 확정 시 호출 */
+  const handleDeleteConfirm = useCallback(
+    async (mode: DeleteMode) => {
+      if (!editingSchedule) return
+      await deleteSchedule(editingSchedule.id, mode)
+      setShowDeleteDialog(false)
+      closeForm()
+    },
+    [editingSchedule, deleteSchedule, closeForm]
   )
 
   return (
@@ -315,6 +340,14 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
           )}
         </div>
       )}
+
+      {/* 반복 일정 삭제 확인 다이얼로그 — 인라인 폼 위에 표시됨 (z-index 110) */}
+      <RecurringDeleteDialog
+        isOpen={showDeleteDialog}
+        scheduleTitle={editingSchedule?.title ?? ''}
+        onCancel={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }

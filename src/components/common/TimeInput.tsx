@@ -123,7 +123,7 @@ export const TimeInput = ({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">
+      <label className="text-base font-medium text-gray-700 dark:text-neutral-300">
         {label}
       </label>
 

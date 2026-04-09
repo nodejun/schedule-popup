@@ -59,6 +59,33 @@ export const getEvents = async (
   return data.items ?? []
 }
 
+/**
+ * 단일 이벤트 한 건을 가져온다.
+ *
+ * 반복 일정의 부모 이벤트를 조회할 때 사용한다 — events.list는
+ * singleEvents=true 옵션 때문에 부모 자체가 아닌 인스턴스만 돌려주므로,
+ * 부모의 RRULE을 알려면 이 함수가 필요하다.
+ *
+ * @param eventId - 조회할 이벤트 ID (인스턴스 ID도 가능, 부모도 가능)
+ * @param calendarId - 캘린더 ID (기본: 'primary')
+ * @returns 단일 이벤트 객체
+ *
+ * NestJS 비유: GET /calendar/events/:id
+ */
+export const getEvent = async (
+  eventId: string,
+  calendarId: string = 'primary'
+): Promise<GoogleCalendarEvent> => {
+  const url = `${BASE_URL}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`
+  const response = await fetchWithAuth(url)
+
+  if (!response.ok) {
+    throw new Error(`이벤트 조회 실패: ${response.status}`)
+  }
+
+  return response.json()
+}
+
 // ─────────────────────────────────────────────
 // 생성 (Create)
 // ─────────────────────────────────────────────

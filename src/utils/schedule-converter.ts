@@ -102,6 +102,8 @@ export const googleEventToSchedule = (event: GoogleCalendarEvent): Schedule => (
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   recurrence: event.recurrence?.[0] ?? null,
+  // 반복 인스턴스만 채워짐 (단발성 이벤트는 undefined)
+  recurringEventId: event.recurringEventId,
 })
 
 /**

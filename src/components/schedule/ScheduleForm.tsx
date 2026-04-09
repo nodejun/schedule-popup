@@ -194,7 +194,7 @@ export const ScheduleForm = ({
 
       {/* 설명 */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">
+        <label className="text-base font-medium text-gray-700 dark:text-neutral-300">
           설명 (선택)
         </label>
         <textarea
@@ -251,7 +251,7 @@ export const ScheduleForm = ({
       {/* 캘린더 선택 — Google 연결 시 표시 */}
       {googleAuth.isAuthenticated && (
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">
+          <label className="text-base font-medium text-gray-700 dark:text-neutral-300">
             캘린더
           </label>
           <select
@@ -274,7 +274,7 @@ export const ScheduleForm = ({
 
       {/* 반복 선택 */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">
+        <label className="text-base font-medium text-gray-700 dark:text-neutral-300">
           반복
         </label>
         <select
@@ -292,7 +292,7 @@ export const ScheduleForm = ({
 
       {/* 색상 */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-700 dark:text-neutral-300">
+        <label className="text-base font-medium text-gray-700 dark:text-neutral-300">
           색상
         </label>
         <ColorPicker

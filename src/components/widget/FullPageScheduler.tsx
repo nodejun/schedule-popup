@@ -5,15 +5,17 @@
  * DateNavigator + TimelineView + ScheduleForm(모달) + FAB(추가 버튼)으로 구성.
  */
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useScheduleStore } from '@/stores/schedule-store'
+import type { DeleteMode } from '@/stores/schedule-store'
 import { useSettingsStore } from '@/stores/settings-store'
 import { DateNavigator } from '../common/DateNavigator'
 import { Modal } from '../common/Modal'
 import { Button } from '../common/Button'
 import { TimelineView } from '../schedule/TimelineView'
 import { ScheduleForm } from '../schedule/ScheduleForm'
+import { RecurringDeleteDialog } from '../schedule/RecurringDeleteDialog'
 
 export const FullPageScheduler = (): ReactNode => {
   const {
@@ -35,6 +37,9 @@ export const FullPageScheduler = (): ReactNode => {
 
   const { settings, loadSettings } = useSettingsStore()
 
+  /** 반복 일정 삭제 다이얼로그 표시 여부 */
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
   useEffect(() => {
     void loadSettings()
     void fetchSchedules()
@@ -52,11 +57,27 @@ export const FullPageScheduler = (): ReactNode => {
     }
   }
 
+  /**
+   * 삭제 버튼 클릭:
+   * - 반복 일정의 인스턴스라면 → 다이얼로그 표시 (3옵션 선택)
+   * - 단일 일정이라면          → 즉시 삭제
+   */
   const handleDelete = () => {
-    if (editingSchedule) {
+    if (!editingSchedule) return
+    if (editingSchedule.recurringEventId) {
+      setShowDeleteDialog(true)
+    } else {
       void deleteSchedule(editingSchedule.id)
       closeForm()
     }
+  }
+
+  /** 다이얼로그에서 모드 확정 시 호출 */
+  const handleDeleteConfirm = (mode: DeleteMode) => {
+    if (!editingSchedule) return
+    void deleteSchedule(editingSchedule.id, mode)
+    setShowDeleteDialog(false)
+    closeForm()
   }
 
   return (
@@ -125,6 +146,14 @@ export const FullPageScheduler = (): ReactNode => {
           </div>
         )}
       </Modal>
+
+      {/* 반복 일정 삭제 확인 다이얼로그 — 폼 모달 위에 표시됨 (z-index 110) */}
+      <RecurringDeleteDialog
+        isOpen={showDeleteDialog}
+        scheduleTitle={editingSchedule?.title ?? ''}
+        onCancel={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }
