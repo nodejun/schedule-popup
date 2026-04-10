@@ -142,20 +142,47 @@ export const useGoogleCalendarStore = create<GoogleCalendarStore>(
         ).getDate()
         const timeMax = `${yearMonth}-${String(lastDay).padStart(2, '0')}T23:59:59Z`
 
-        // Google Calendar API 호출
-        const events = await getEvents(timeMin, timeMax)
+        // 모든 캘린더(생일 포함 read-only까지) 목록 가져오기
+        const allCalendars = await getCalendarList()
 
-        // Google 이벤트 → Schedule 변환
-        const schedules = googleEventsToSchedules(events)
+        // 각 캘린더에서 이벤트 병렬 가져오기 (에러는 무시하고 계속)
+        const perCalendarResults = await Promise.allSettled(
+          allCalendars.map(async (cal) => {
+            const events = await getEvents(timeMin, timeMax, cal.id)
+            return googleEventsToSchedules(events, {
+              calendarId: cal.id,
+              calendarName: cal.summary,
+              calendarColor: cal.backgroundColor,
+            })
+          })
+        )
+
+        // 결과 병합 — 같은 이벤트 id 중복 제거
+        const seenIds = new Set<string>()
+        const allSchedules: Array<Schedule> = []
+        for (const result of perCalendarResults) {
+          if (result.status !== 'fulfilled') continue
+          for (const schedule of result.value) {
+            if (!seenIds.has(schedule.id)) {
+              seenIds.add(schedule.id)
+              allSchedules.push(schedule)
+            }
+          }
+        }
 
         // 날짜별로 분류
         const googleSchedules: Record<string, ReadonlyArray<Schedule>> = {}
-        for (const schedule of schedules) {
+        for (const schedule of allSchedules) {
           const existing = googleSchedules[schedule.date] ?? []
           googleSchedules[schedule.date] = [...existing, schedule]
         }
 
-        set({ googleSchedules, isGoogleSyncing: false })
+        // 기존 상태에 병합 — 다른 월 동기화 결과를 덮어쓰지 않음
+        // (월 경계 주에서 2개 월이 동시에 sync될 때 레이스 컨디션 방지)
+        set((state) => ({
+          googleSchedules: { ...state.googleSchedules, ...googleSchedules },
+          isGoogleSyncing: false,
+        }))
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Google 동기화 실패'

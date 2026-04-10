@@ -25,6 +25,8 @@ import { createSchedulerInline } from './injectors/scheduler-inline-injector'
 import { MiniWidget } from '@/components/widget/MiniWidget'
 import { InlineScheduler } from '@/components/widget/InlineScheduler'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
+import { useScheduleStore } from '@/stores/schedule-store'
+import { toYearMonth } from '@/utils/calendar-utils'
 
 /**
  * React root 인스턴스 관리
@@ -41,7 +43,7 @@ const reactRoots = new Map<HTMLDivElement, Root>()
  * onOpenScheduler 콜백을 클로저로 캡처하여 인라인 스케줄러를 열 수 있도록 한다.
  */
 const createMiniWidgetRenderer = (
-  onOpenScheduler: () => void
+  onOpenScheduler: (date?: string) => void
 ) => (mountPoint: HTMLDivElement): void => {
   const existingRoot = reactRoots.get(mountPoint)
   if (existingRoot) {
@@ -94,13 +96,17 @@ const init = (): void => {
     }
   )
 
-  /** 인라인 스케줄러 표시 */
-  const showScheduler = (): void => {
+  /** 인라인 스케줄러 표시 — date 지정 시 해당 월로 이동 후 열기 */
+  const showScheduler = (date?: string): void => {
+    if (date) {
+      const yearMonth = toYearMonth(date)
+      void useScheduleStore.getState().setCurrentMonth(yearMonth)
+    }
     inlineScheduler.show()
   }
 
-  // 0. MAIN World pushState 차단 이벤트 수신 → 인라인 스케줄러 표시
-  window.addEventListener('ss-shorts-blocked', showScheduler)
+  // 0. MAIN World pushState 차단 이벤트 수신 → 인라인 스케줄러 표시 (date 없이)
+  window.addEventListener('ss-shorts-blocked', () => { showScheduler() })
 
   // 1. Injector 생성 (인라인 스케줄러 열기 콜백을 MiniWidget에 전달)
   const renderMiniWidget = createMiniWidgetRenderer(showScheduler)

@@ -90,7 +90,16 @@ const extractTime = (dateTime?: string): string => {
  *
  * NestJS 비유: Entity → ResponseDTO 변환
  */
-export const googleEventToSchedule = (event: GoogleCalendarEvent): Schedule => ({
+interface CalendarMeta {
+  readonly calendarId?: string
+  readonly calendarName?: string
+  readonly calendarColor?: string
+}
+
+export const googleEventToSchedule = (
+  event: GoogleCalendarEvent,
+  meta: CalendarMeta = {}
+): Schedule => ({
   id: `google_${event.id}`,
   title: event.summary || '(제목 없음)',
   description: event.description ?? '',
@@ -104,6 +113,10 @@ export const googleEventToSchedule = (event: GoogleCalendarEvent): Schedule => (
   recurrence: event.recurrence?.[0] ?? null,
   // 반복 인스턴스만 채워짐 (단발성 이벤트는 undefined)
   recurringEventId: event.recurringEventId,
+  // 캘린더 메타 — 아이콘/색상 구분에 사용
+  calendarId: meta.calendarId,
+  calendarName: meta.calendarName,
+  calendarColor: meta.calendarColor,
 })
 
 /**
@@ -111,11 +124,12 @@ export const googleEventToSchedule = (event: GoogleCalendarEvent): Schedule => (
  * cancelled 상태의 이벤트는 제외한다.
  */
 export const googleEventsToSchedules = (
-  events: ReadonlyArray<GoogleCalendarEvent>
+  events: ReadonlyArray<GoogleCalendarEvent>,
+  meta: CalendarMeta = {}
 ): ReadonlyArray<Schedule> =>
   events
     .filter((event) => event.status !== 'cancelled')
-    .map(googleEventToSchedule)
+    .map((event) => googleEventToSchedule(event, meta))
 
 // ─────────────────────────────────────────────
 // Schedule → Google Event 변환
