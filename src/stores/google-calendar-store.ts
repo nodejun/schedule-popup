@@ -70,8 +70,10 @@ export const useGoogleCalendarStore = create<GoogleCalendarStore>(
     checkAuthAndSync: async (yearMonth: string) => {
       // 이미 인증된 상태면 동기화만
       if (get().googleAuth.isAuthenticated) {
-        get().syncFromGoogle(yearMonth)
-        get().fetchCalendarList()
+        await Promise.all([
+          get().syncFromGoogle(yearMonth),
+          get().fetchCalendarList(),
+        ])
         return
       }
       // 캐시된 토큰 확인 (팝업 없이, interactive: false)
@@ -84,8 +86,10 @@ export const useGoogleCalendarStore = create<GoogleCalendarStore>(
             error: null,
           },
         })
-        get().syncFromGoogle(yearMonth)
-        get().fetchCalendarList()
+        await Promise.all([
+          get().syncFromGoogle(yearMonth),
+          get().fetchCalendarList(),
+        ])
       } catch {
         // 토큰 없음 = 미연결 상태 → 무시 (사용자가 직접 연결해야 함)
       }
@@ -128,6 +132,11 @@ export const useGoogleCalendarStore = create<GoogleCalendarStore>(
     },
 
     syncFromGoogle: async (yearMonth: string) => {
+      // yearMonth 형식 검증 (YYYY-MM)
+      if (!/^\d{4}-\d{2}$/.test(yearMonth)) {
+        return
+      }
+
       const { googleAuth } = get()
       if (!googleAuth.isAuthenticated) return
 

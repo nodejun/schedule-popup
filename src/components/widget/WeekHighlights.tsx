@@ -77,6 +77,19 @@ const HighlightRow = ({ schedule, date }: HighlightRowProps) => {
   )
 }
 
+/** 하이라이트 우선순위 점수 — 생일(3) > 반복(2) > 회사(1) > 기타(0) */
+const getHighlightScore = (schedule: Schedule): number => {
+  const name = (schedule.calendarName ?? '').toLowerCase()
+  const title = (schedule.title ?? '').toLowerCase()
+  if (
+    name.includes('생일') || name.includes('birthday') ||
+    title.includes('생일') || title.includes('birthday')
+  ) return 3
+  if (schedule.recurrence || schedule.recurringEventId) return 2
+  if (name.includes('회사') || name.includes('work')) return 1
+  return 0
+}
+
 interface WeekHighlightsProps {
   readonly weekStart: string
 }
@@ -136,16 +149,4 @@ export const WeekHighlights = ({ weekStart }: WeekHighlightsProps): ReactNode =>
       </div>
     </div>
   )
-}
-
-const getHighlightScore = (schedule: Schedule): number => {
-  const name = (schedule.calendarName ?? '').toLowerCase()
-  const title = (schedule.title ?? '').toLowerCase()
-  if (
-    name.includes('생일') || name.includes('birthday') ||
-    title.includes('생일') || title.includes('birthday')
-  ) return 3
-  if (schedule.recurrence || schedule.recurringEventId) return 2
-  if (name.includes('회사') || name.includes('work')) return 1
-  return 0
 }

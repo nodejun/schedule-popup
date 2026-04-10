@@ -55,6 +55,9 @@ chrome.webNavigation.onBeforeNavigate.addListener(
 // 서비스 워커가 리다이렉트를 대행한다.
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // 확장프로그램 외부 발신자 차단 — 다른 확장프로그램 또는 웹페이지의 메시지 무시
+  if (sender.id !== chrome.runtime.id) return
+
   if (message.type === 'open-scheduler' && sender.tab?.id) {
     void chrome.tabs.update(sender.tab.id, { url: SCHEDULER_URL })
   }

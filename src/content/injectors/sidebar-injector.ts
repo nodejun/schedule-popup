@@ -44,6 +44,12 @@ const CALENDAR_ICON_SVG = `
 </svg>
 `.trim();
 
+/**
+ * 원본 아이콘 자식 노드 저장소
+ * innerHTML 문자열 대신 실제 DOM 노드를 보관 → XSS 위험 없음
+ */
+const iconOriginalChildren = new WeakMap<Element, Node[]>();
+
 /** 사이드바 클릭 핸들러 타입 */
 export type SidebarClickHandler = () => void;
 
@@ -86,9 +92,12 @@ const modifySidebarLink = (
   // 아이콘 변경
   const iconContainer = link.querySelector("yt-icon");
   if (iconContainer) {
-    // 원본 아이콘 HTML 저장
-    iconContainer.setAttribute("data-original-icon", iconContainer.innerHTML);
-    iconContainer.innerHTML = CALENDAR_ICON_SVG;
+    // 원본 자식 노드를 WeakMap에 저장 (innerHTML 문자열 대신 → XSS 위험 없음)
+    iconOriginalChildren.set(iconContainer, [...iconContainer.childNodes].map((n) => n.cloneNode(true)));
+    const parser = new DOMParser();
+    const svgDoc = parser.parseFromString(CALENDAR_ICON_SVG, 'image/svg+xml');
+    const svgEl = svgDoc.documentElement;
+    iconContainer.replaceChildren(svgEl);
   }
 
   // 클릭 동작 변경
@@ -140,13 +149,13 @@ const restoreSidebarLinks = (): void => {
       anchor.href = originalHref;
     }
 
-    // 원본 아이콘 복원
+    // 원본 아이콘 복원 (WeakMap에서 저장된 노드로 복원)
     const iconContainer = anchor.querySelector("yt-icon");
     if (iconContainer) {
-      const originalIcon = iconContainer.getAttribute("data-original-icon");
-      if (originalIcon) {
-        iconContainer.innerHTML = originalIcon;
-        iconContainer.removeAttribute("data-original-icon");
+      const originalNodes = iconOriginalChildren.get(iconContainer);
+      if (originalNodes) {
+        iconContainer.replaceChildren(...originalNodes.map((n) => n.cloneNode(true)));
+        iconOriginalChildren.delete(iconContainer);
       }
     }
 

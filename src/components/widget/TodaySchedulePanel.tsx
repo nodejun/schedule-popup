@@ -17,7 +17,7 @@ const formatAmPm = (time: string): string => {
   const hour = parseInt(hourStr ?? '0', 10)
   const period = hour < 12 ? 'AM' : 'PM'
   const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
-  return `${period} ${displayHour}:${minute}`
+  return `${period} ${displayHour}:${minute ?? '00'}`
 }
 
 const DOT_COLORS: Record<ScheduleColor, string> = {
@@ -66,10 +66,10 @@ export const TodaySchedulePanel = ({
   date,
   onOpenScheduler,
 }: TodaySchedulePanelProps): ReactNode => {
-  const { schedules } = useScheduleStore()
+  const { weekSchedules } = useScheduleStore()
   const { googleSchedules } = useGoogleCalendarStore()
 
-  const localList = schedules as ReadonlyArray<Schedule>
+  const localList = weekSchedules[date] ?? []
   const googleList = googleSchedules[date] ?? []
 
   const seenIds = new Set(localList.map((s) => s.id))

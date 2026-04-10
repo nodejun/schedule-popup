@@ -75,6 +75,8 @@ export const MiniWidget = ({ onOpenScheduler }: MiniWidgetProps): ReactNode => {
     // Google 인증 확인 후 이번 주의 월(들) 동기화
     const yearMonth = toYearMonth(today)
     void checkAuthAndSync(yearMonth)
+  // 마운트 시 1회만 실행 — today는 컴포넌트 수명 동안 불변
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   /** 주간 이동 시 Google 동기화 보장 */

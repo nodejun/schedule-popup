@@ -148,11 +148,11 @@ export const scheduleToGoogleEvent = (input: ScheduleInput): GoogleEventInput =>
   description: input.description ?? '',
   start: {
     dateTime: `${input.date}T${input.startTime}:00`,
-    timeZone: 'Asia/Seoul',
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   },
   end: {
     dateTime: `${input.date}T${input.endTime}:00`,
-    timeZone: 'Asia/Seoul',
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   },
   colorId: SCHEDULE_COLOR_TO_GOOGLE[input.color ?? 'blue'],
   ...(input.recurrence ? { recurrence: [input.recurrence] } : {}),

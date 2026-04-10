@@ -15,6 +15,11 @@
 (function() {
   'use strict';
 
+  // ── 세션 nonce 생성 ──
+  // Content Script가 외부 스크립트의 이벤트 스푸핑을 방지하기 위해 nonce를 검증한다.
+  var nonce = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  window.__ssNonce = nonce;
+
   // ── pushState / replaceState 가로채기 ──
 
   var realPushState = history.pushState;
@@ -40,7 +45,7 @@
   history.pushState = function(state, title, url) {
     if (isShortsUrl(url)) {
       // /shorts 네비게이션 차단 → Content Script에 알림
-      window.dispatchEvent(new CustomEvent('ss-shorts-blocked'));
+      window.dispatchEvent(new CustomEvent('ss-shorts-blocked', { detail: { nonce: nonce } }));
       return;
     }
     return realPushState.apply(this, arguments);
@@ -48,7 +53,7 @@
 
   history.replaceState = function(state, title, url) {
     if (isShortsUrl(url)) {
-      window.dispatchEvent(new CustomEvent('ss-shorts-blocked'));
+      window.dispatchEvent(new CustomEvent('ss-shorts-blocked', { detail: { nonce: nonce } }));
       return;
     }
     return realReplaceState.apply(this, arguments);

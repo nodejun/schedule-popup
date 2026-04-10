@@ -106,7 +106,14 @@ const init = (): void => {
   }
 
   // 0. MAIN World pushState 차단 이벤트 수신 → 인라인 스케줄러 표시 (date 없이)
-  window.addEventListener('ss-shorts-blocked', () => { showScheduler() })
+  // nonce 검증: MAIN World 스크립트가 심어둔 nonce와 일치할 때만 처리
+  // 외부 스크립트가 ss-shorts-blocked 이벤트를 스푸핑하는 것을 방지한다.
+  window.addEventListener('ss-shorts-blocked', (e) => {
+    const expectedNonce = (window as Window & { __ssNonce?: string }).__ssNonce
+    const detail = (e as CustomEvent<{ nonce?: string }>).detail
+    if (!expectedNonce || detail?.nonce !== expectedNonce) return
+    showScheduler()
+  })
 
   // 1. Injector 생성 (인라인 스케줄러 열기 콜백을 MiniWidget에 전달)
   const renderMiniWidget = createMiniWidgetRenderer(showScheduler)
