@@ -11,6 +11,7 @@
 
 import type { ReactNode } from 'react'
 import { FullPageScheduler } from '@/components/widget/FullPageScheduler'
+import { useTranslation } from '@/i18n'
 
 const handleBackToYouTube = (): void => {
   // history.back()은 브라우저 캐시에서 이전 페이지를 복원하므로 즉시 돌아간다.
@@ -23,6 +24,7 @@ const handleBackToYouTube = (): void => {
 }
 
 export const SchedulerPage = (): ReactNode => {
+  const t = useTranslation()
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       {/* 상단 네비게이션 */}
@@ -47,7 +49,7 @@ export const SchedulerPage = (): ReactNode => {
               <path d="M19 12H5" />
               <path d="m12 19-7-7 7-7" />
             </svg>
-            YouTube로 돌아가기
+            {t.calendar.backToYouTube}
           </button>
         </div>
       </nav>

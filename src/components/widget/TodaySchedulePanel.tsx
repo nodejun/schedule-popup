@@ -8,14 +8,15 @@
 import type { ReactNode } from 'react'
 import { useScheduleStore } from '@/stores/schedule-store'
 import { useGoogleCalendarStore } from '@/stores/google-calendar-store'
-import { isToday, sortByStartTime } from '@/utils/date-utils'
+import { isToday, sortByStartTime, formatDateDisplay } from '@/utils/date-utils'
 import type { Schedule, ScheduleColor } from '@/types/schedule'
+import { useTranslation } from '@/i18n'
 
-/** "09:00" → "AM 9:00", "14:30" → "PM 2:30" */
-const formatAmPm = (time: string): string => {
+/** "09:00" → "AM 9:00", "14:30" → "PM 2:30" (locale-aware) */
+const formatAmPm = (time: string, am: string, pm: string): string => {
   const [hourStr, minute] = time.split(':')
   const hour = parseInt(hourStr ?? '0', 10)
-  const period = hour < 12 ? 'AM' : 'PM'
+  const period = hour < 12 ? am : pm
   const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
   return `${period} ${displayHour}:${minute ?? '00'}`
 }
@@ -34,6 +35,7 @@ interface ScheduleRowProps {
 }
 
 const ScheduleRow = ({ schedule }: ScheduleRowProps) => {
+  const t = useTranslation()
   const dotStyle = schedule.calendarColor
     ? { backgroundColor: schedule.calendarColor }
     : undefined
@@ -50,7 +52,7 @@ const ScheduleRow = ({ schedule }: ScheduleRowProps) => {
           {schedule.title}
         </p>
         <p className="text-base text-neutral-500 dark:text-neutral-400 leading-tight">
-          {formatAmPm(schedule.startTime)} – {formatAmPm(schedule.endTime)}
+          {formatAmPm(schedule.startTime, t.time.am, t.time.pm)} – {formatAmPm(schedule.endTime, t.time.am, t.time.pm)}
         </p>
       </div>
     </div>
@@ -66,6 +68,7 @@ export const TodaySchedulePanel = ({
   date,
   onOpenScheduler,
 }: TodaySchedulePanelProps): ReactNode => {
+  const t = useTranslation()
   const { weekSchedules } = useScheduleStore()
   const { googleSchedules } = useGoogleCalendarStore()
 
@@ -78,15 +81,7 @@ export const TodaySchedulePanel = ({
   const combined = sortByStartTime([...localList, ...uniqueGoogle])
   const isSelectedToday = isToday(date)
 
-  const headerText = isSelectedToday
-    ? '오늘'
-    : (() => {
-        const [, monthStr, dayStr] = date.split('-')
-        const days = ['일', '월', '화', '수', '목', '금', '토']
-        const dateObj = new Date(date)
-        const dow = days[dateObj.getDay()] ?? ''
-        return `${parseInt(monthStr ?? '1', 10)}/${parseInt(dayStr ?? '1', 10)} (${dow})`
-      })()
+  const headerText = isSelectedToday ? t.time.today : formatDateDisplay(date)
 
   return (
     <div className="flex flex-col h-full">
@@ -97,7 +92,7 @@ export const TodaySchedulePanel = ({
         </h4>
         {isSelectedToday && (
           <span className="text-base px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full font-medium">
-            Today
+            {t.time.today}
           </span>
         )}
       </div>
@@ -107,7 +102,7 @@ export const TodaySchedulePanel = ({
         {combined.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-1.5">
             <span className="text-3xl">📭</span>
-            <p className="text-sm text-neutral-400">일정 없음</p>
+            <p className="text-sm text-neutral-400">{t.schedule.noSchedules}</p>
           </div>
         ) : (
           <div className="space-y-1 overflow-y-auto max-h-[200px]">
@@ -124,7 +119,7 @@ export const TodaySchedulePanel = ({
         onClick={() => onOpenScheduler?.(date)}
         className="mt-2 text-sm font-medium text-blue-500 dark:text-blue-400 hover:underline text-left"
       >
-        캘린더 →
+        {t.calendar.openCalendar}
       </button>
     </div>
   )

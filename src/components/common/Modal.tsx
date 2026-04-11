@@ -7,6 +7,7 @@
 
 import { useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslation } from '@/i18n'
 
 interface ModalProps {
   readonly isOpen: boolean
@@ -21,6 +22,7 @@ export const Modal = ({
   title,
   children,
 }: ModalProps): ReactNode => {
+  const t = useTranslation()
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -61,7 +63,7 @@ export const Modal = ({
           <button
             onClick={onClose}
             className="p-1.5 rounded-[10px] border-none bg-transparent cursor-pointer text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-all duration-200"
-            aria-label="닫기"
+            aria-label={t.aria.closeModal}
           >
             <svg
               width="20"

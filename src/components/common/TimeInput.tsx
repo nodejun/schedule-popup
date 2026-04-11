@@ -8,6 +8,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslation } from '@/i18n'
 
 interface TimeInputProps {
   readonly label: string
@@ -33,11 +34,11 @@ const generateTimeSlots = (): ReadonlyArray<string> => {
 
 const TIME_SLOTS = generateTimeSlots()
 
-/** 시간을 "오전/오후 HH:MM" 형식으로 표시 */
-const formatDisplayTime = (time: string): string => {
+/** 시간을 "AM/PM HH:MM" (또는 로케일 형식)으로 표시 */
+const formatDisplayTime = (time: string, am: string, pm: string): string => {
   const [hourStr, minute] = time.split(':')
   const hour = parseInt(hourStr ?? '0', 10)
-  const period = hour < 12 ? '오전' : '오후'
+  const period = hour < 12 ? am : pm
   const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
   return `${period} ${String(displayHour).padStart(2, '0')}:${minute}`
 }
@@ -49,6 +50,7 @@ export const TimeInput = ({
   min,
   error,
 }: TimeInputProps): ReactNode => {
+  const t = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [isPositioned, setIsPositioned] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -143,7 +145,7 @@ export const TimeInput = ({
               : 'border-gray-200 dark:border-neutral-600 hover:border-gray-300',
         ].join(' ')}
       >
-        <span>{formatDisplayTime(value)}</span>
+        <span>{formatDisplayTime(value, t.time.am, t.time.pm)}</span>
         <svg
           width="16"
           height="16"
@@ -177,7 +179,7 @@ export const TimeInput = ({
                     : 'text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-700',
                 ].join(' ')}
               >
-                {formatDisplayTime(slot)}
+                {formatDisplayTime(slot, t.time.am, t.time.pm)}
               </button>
             )
           })}

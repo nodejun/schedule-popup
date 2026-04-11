@@ -9,6 +9,7 @@
 
 import type { GoogleCalendarEvent, GoogleEventInput } from '@/types/google-calendar'
 import type { Schedule, ScheduleColor, ScheduleInput } from '@/types/schedule'
+import { getTranslations } from '@/i18n'
 
 // ─────────────────────────────────────────────
 // Google colorId ↔ 우리 color 매핑
@@ -101,7 +102,7 @@ export const googleEventToSchedule = (
   meta: CalendarMeta = {}
 ): Schedule => ({
   id: `google_${event.id}`,
-  title: event.summary || '(제목 없음)',
+  title: event.summary || getTranslations().schedule.noTitle,
   description: event.description ?? '',
   date: extractDate(event.start.dateTime, event.start.date),
   startTime: extractTime(event.start.dateTime),

@@ -8,6 +8,7 @@
 import type { ReactNode } from 'react'
 import { addDays, formatDateDisplay, isToday } from '@/utils/date-utils'
 import { Button } from './Button'
+import { useTranslation } from '@/i18n'
 
 interface DateNavigatorProps {
   readonly selectedDate: string
@@ -18,6 +19,7 @@ export const DateNavigator = ({
   selectedDate,
   onDateChange,
 }: DateNavigatorProps): ReactNode => {
+  const t = useTranslation()
   const handlePrev = () => onDateChange(addDays(selectedDate, -1))
   const handleNext = () => onDateChange(addDays(selectedDate, 1))
   const handleToday = () => {
@@ -33,7 +35,7 @@ export const DateNavigator = ({
   return (
     <div className="flex items-center justify-between py-3">
       {/* 이전 날짜 */}
-      <Button variant="ghost" size="sm" onClick={handlePrev} aria-label="이전 날짜">
+      <Button variant="ghost" size="sm" onClick={handlePrev} aria-label={t.aria.prevDate}>
         <svg
           className="w-5 h-5"
           fill="none"
@@ -56,13 +58,13 @@ export const DateNavigator = ({
         </span>
         {!isTodaySelected && (
           <Button variant="ghost" size="sm" onClick={handleToday}>
-            오늘
+            {t.common.today}
           </Button>
         )}
       </div>
 
       {/* 다음 날짜 */}
-      <Button variant="ghost" size="sm" onClick={handleNext} aria-label="다음 날짜">
+      <Button variant="ghost" size="sm" onClick={handleNext} aria-label={t.aria.nextDate}>
         <svg
           className="w-5 h-5"
           fill="none"

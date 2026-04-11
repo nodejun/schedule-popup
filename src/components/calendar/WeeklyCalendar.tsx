@@ -10,12 +10,14 @@ import { useScheduleStore } from '@/stores/schedule-store'
 import { getWeekStart } from '@/utils/calendar-utils'
 import { getToday } from '@/utils/date-utils'
 import { WeekStrip } from './WeekStrip'
+import { useTranslation } from '@/i18n'
 
 interface WeeklyCalendarProps {
   readonly onOpenScheduler?: (date?: string) => void
 }
 
 export const WeeklyCalendar = ({ onOpenScheduler }: WeeklyCalendarProps) => {
+  const t = useTranslation()
   const {
     currentWeekStart,
     weekSchedules,
@@ -34,7 +36,7 @@ export const WeeklyCalendar = ({ onOpenScheduler }: WeeklyCalendarProps) => {
       <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-red-500 to-red-600">
         <div>
           <h3 className="text-sm font-bold text-white">ShortScheduler</h3>
-          <p className="text-xs text-white/80">이번 주 일정</p>
+          <p className="text-xs text-white/80">{t.widget.thisWeek}</p>
         </div>
       </div>
 
@@ -59,7 +61,7 @@ export const WeeklyCalendar = ({ onOpenScheduler }: WeeklyCalendarProps) => {
                      hover:bg-red-100 dark:hover:bg-red-900/30
                      transition-colors"
         >
-          전체 일정 보기
+          {t.calendar.viewAllSchedules}
         </button>
       </div>
     </div>

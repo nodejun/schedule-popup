@@ -76,7 +76,8 @@ describe('googleEventToSchedule', () => {
 
   it('제목이 없으면 "(제목 없음)"을 사용한다', () => {
     const event = createGoogleEvent({ summary: '' })
-    expect(googleEventToSchedule(event).title).toBe('(제목 없음)')
+    // i18n defaults to English in test environment (no chrome.i18n.getUILanguage)
+    expect(googleEventToSchedule(event).title).toBe('(No title)')
   })
 
   it('cancelled 이벤트는 isCompleted가 true이다', () => {

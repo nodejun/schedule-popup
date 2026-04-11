@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "ShortScheduler",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Replace YouTube Shorts with your personal scheduler",
+    "description": "Extension description"
+  }
+}

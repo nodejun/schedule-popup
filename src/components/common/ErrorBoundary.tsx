@@ -13,6 +13,7 @@
 
 import { Component } from 'react'
 import type { ReactNode, ErrorInfo } from 'react'
+import { getTranslations } from '@/i18n'
 
 interface ErrorBoundaryProps {
   /** 감싸는 자식 컴포넌트들 */
@@ -72,6 +73,8 @@ export class ErrorBoundary extends Component<
         return this.props.fallback
       }
 
+      const t = getTranslations()
+
       // 기본 에러 UI
       return (
         <div
@@ -81,17 +84,17 @@ export class ErrorBoundary extends Component<
             !
           </div>
           <h3 className="text-base mb-2 m-0 text-gray-900 dark:text-neutral-200 font-bold leading-snug">
-            문제가 발생했습니다
+            {t.error.general}
           </h3>
           <p className="text-[13px] mb-5 m-0 max-w-[280px] text-gray-400 dark:text-neutral-500 leading-snug">
-            {this.state.errorMessage ?? '일시적인 오류가 발생했습니다.'}
+            {this.state.errorMessage ?? t.error.temporary}
           </p>
           <button
             type="button"
             onClick={this.handleRetry}
             className="px-5 py-2 text-[13px] font-medium border-none cursor-pointer bg-red-500 text-white hover:bg-red-600 hover:scale-[1.02] transition-all duration-200 rounded-full"
           >
-            다시 시도
+            {t.common.retry}
           </button>
         </div>
       )

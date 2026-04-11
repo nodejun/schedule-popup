@@ -7,12 +7,13 @@
 
 import type { ReactNode } from 'react'
 import type { Schedule, ScheduleColor } from '@/types/schedule'
+import { useTranslation } from '@/i18n'
 
-/** "09:00" → "AM 9:00", "14:30" → "PM 2:30" */
-const formatAmPm = (time: string): string => {
+/** "09:00" → "AM 9:00", "14:30" → "PM 2:30" (locale-aware) */
+const formatAmPm = (time: string, am: string, pm: string): string => {
   const [hourStr, minute] = time.split(':')
   const hour = parseInt(hourStr ?? '0', 10)
-  const period = hour < 12 ? 'AM' : 'PM'
+  const period = hour < 12 ? am : pm
   const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
   return `${period} ${displayHour}:${minute}`
 }
@@ -73,6 +74,7 @@ export const ScheduleCard = ({
   columnIndex = 0,
   totalColumns = 1,
 }: ScheduleCardProps): ReactNode => {
+  const t = useTranslation()
   const colors = colorStyles[schedule.color]
   const minHeight = Math.max(heightPercent, 2.5) // 최소 높이 보장
 
@@ -120,7 +122,7 @@ export const ScheduleCard = ({
             e.stopPropagation()
             onToggleComplete(schedule.id)
           }}
-          aria-label={schedule.isCompleted ? '미완료로 변경' : '완료로 변경'}
+          aria-label={schedule.isCompleted ? t.aria.markIncomplete : t.aria.markComplete}
         >
           <div
             className={`flex items-center justify-center transition-all duration-200 w-4 h-4 rounded border-2 ${
@@ -158,7 +160,7 @@ export const ScheduleCard = ({
           <p
             className={`text-[12px] font-medium mt-1 tabular-nums leading-snug ${colors.text} opacity-70`}
           >
-            {formatAmPm(schedule.startTime)} ~ {formatAmPm(schedule.endTime)}
+            {formatAmPm(schedule.startTime, t.time.am, t.time.pm)} ~ {formatAmPm(schedule.endTime, t.time.am, t.time.pm)}
           </p>
         </div>
       </div>

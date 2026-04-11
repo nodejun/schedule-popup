@@ -8,6 +8,7 @@
 import type { ReactNode } from 'react'
 import type { Schedule, ScheduleColor } from '@/types/schedule'
 import { sortByStartTime } from '@/utils/date-utils'
+import { useTranslation } from '@/i18n'
 
 interface ScheduleListProps {
   readonly schedules: ReadonlyArray<Schedule>
@@ -31,6 +32,7 @@ export const ScheduleList = ({
   onToggleComplete,
   onEdit,
 }: ScheduleListProps): ReactNode => {
+  const t = useTranslation()
   const sorted = sortByStartTime(schedules)
   const displayed = maxItems ? sorted.slice(0, maxItems) : sorted
   const remaining = maxItems ? Math.max(0, sorted.length - maxItems) : 0
@@ -38,7 +40,7 @@ export const ScheduleList = ({
   if (schedules.length === 0) {
     return (
       <p className="text-sm text-neutral-400 dark:text-neutral-500 text-center py-4">
-        오늘 일정이 없습니다
+        {t.schedule.noSchedulesToday}
       </p>
     )
   }
@@ -65,7 +67,7 @@ export const ScheduleList = ({
                 onToggleComplete(schedule.id)
               }}
               className="flex-shrink-0"
-              aria-label={schedule.isCompleted ? '미완료로 변경' : '완료로 변경'}
+              aria-label={schedule.isCompleted ? t.aria.markIncomplete : t.aria.markComplete}
             >
               <div
                 className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
@@ -110,7 +112,7 @@ export const ScheduleList = ({
 
       {remaining > 0 && (
         <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center py-1">
-          +{remaining}개 더
+          {t.schedule.moreCount(remaining)}
         </p>
       )}
     </div>

@@ -11,6 +11,8 @@ import { useGoogleCalendarStore } from '@/stores/google-calendar-store'
 import { getWeekDates } from '@/utils/calendar-utils'
 import { sortByStartTime } from '@/utils/date-utils'
 import type { Schedule } from '@/types/schedule'
+import { useTranslation } from '@/i18n'
+import type { Translations } from '@/i18n'
 
 const MAX_HIGHLIGHTS = 4
 
@@ -33,12 +35,12 @@ const getCalendarIcon = (schedule: Schedule): string => {
   return '👤'
 }
 
-const getRecurrenceLabel = (recurrence: string | null | undefined): string | null => {
+const getRecurrenceLabel = (recurrence: string | null | undefined, t: Translations): string | null => {
   if (!recurrence) return null
-  if (recurrence.includes('DAILY')) return '매일'
-  if (recurrence.includes('WEEKLY')) return '매주'
-  if (recurrence.includes('MONTHLY')) return '매월'
-  if (recurrence.includes('YEARLY')) return '매년'
+  if (recurrence.includes('DAILY')) return t.recurrence.labelDaily
+  if (recurrence.includes('WEEKLY')) return t.recurrence.labelWeekly
+  if (recurrence.includes('MONTHLY')) return t.recurrence.labelMonthly
+  if (recurrence.includes('YEARLY')) return t.recurrence.labelYearly
   return null
 }
 
@@ -48,11 +50,12 @@ interface HighlightRowProps {
 }
 
 const HighlightRow = ({ schedule, date }: HighlightRowProps) => {
+  const t = useTranslation()
   const icon = getCalendarIcon(schedule)
   // recurrence 필드: 마스터 이벤트만 가짐. 인스턴스는 recurringEventId로 반복 여부 판별
   const recurrenceLabel =
-    getRecurrenceLabel(schedule.recurrence) ??
-    (schedule.recurringEventId ? '반복' : null)
+    getRecurrenceLabel(schedule.recurrence, t) ??
+    (schedule.recurringEventId ? t.recurrence.recurring : null)
 
   const [, monthStr, dayStr] = date.split('-')
   const displayDate = `${parseInt(monthStr ?? '1', 10)}/${parseInt(dayStr ?? '1', 10)}`
@@ -95,6 +98,7 @@ interface WeekHighlightsProps {
 }
 
 export const WeekHighlights = ({ weekStart }: WeekHighlightsProps): ReactNode => {
+  const t = useTranslation()
   const { weekSchedules } = useScheduleStore()
   const { googleSchedules } = useGoogleCalendarStore()
 
@@ -129,7 +133,7 @@ export const WeekHighlights = ({ weekStart }: WeekHighlightsProps): ReactNode =>
     <div className="flex flex-col h-full">
       {/* 섹션 헤더 */}
       <h4 className="text-lg font-bold text-neutral-700 dark:text-neutral-300 mb-2">
-        이번 주 하이라이트
+        {t.widget.weekHighlights}
       </h4>
 
       {/* 하이라이트 목록 */}
@@ -137,7 +141,7 @@ export const WeekHighlights = ({ weekStart }: WeekHighlightsProps): ReactNode =>
         {highlights.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-1.5">
             <span className="text-3xl">📅</span>
-            <p className="text-sm text-neutral-400">이번 주 일정 없음</p>
+            <p className="text-sm text-neutral-400">{t.schedule.noSchedulesThisWeek}</p>
           </div>
         ) : (
           <div className="space-y-1 overflow-y-auto max-h-[200px]">

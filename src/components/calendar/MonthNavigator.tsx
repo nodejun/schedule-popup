@@ -6,6 +6,7 @@
  */
 
 import { formatMonthDisplay, getCurrentMonth } from '@/utils/calendar-utils'
+import { useTranslation } from '@/i18n'
 
 interface MonthNavigatorProps {
   readonly currentMonth: string
@@ -40,6 +41,7 @@ export const MonthNavigator = ({
   currentMonth,
   onMonthChange,
 }: MonthNavigatorProps) => {
+  const t = useTranslation()
   const isCurrentMonth = currentMonth === getCurrentMonth()
 
   const handlePrev = () => {
@@ -78,7 +80,7 @@ export const MonthNavigator = ({
         }`}
         style={{ padding: '6px 16px', borderRadius: '10px', border: '1.5px solid', borderColor: isCurrentMonth ? '#e5e5e5' : '#d4d4d4' }}
       >
-        오늘
+        {t.common.today}
       </button>
 
       {/* < > 네비게이션 */}
@@ -87,7 +89,7 @@ export const MonthNavigator = ({
           type="button"
           onClick={handlePrev}
           className="p-2 rounded-xl text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100/80 dark:text-neutral-400 dark:hover:bg-neutral-800/60 transition-all"
-          aria-label="이전 달"
+          aria-label={t.aria.prevMonth}
         >
           <ChevronLeft />
         </button>
@@ -95,7 +97,7 @@ export const MonthNavigator = ({
           type="button"
           onClick={handleNext}
           className="p-2 rounded-xl text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100/80 dark:text-neutral-400 dark:hover:bg-neutral-800/60 transition-all"
-          aria-label="다음 달"
+          aria-label={t.aria.nextMonth}
         >
           <ChevronRight />
         </button>

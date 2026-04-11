@@ -23,12 +23,14 @@ import { ScheduleForm } from '@/components/schedule/ScheduleForm'
 import { RecurringDeleteDialog } from '@/components/schedule/RecurringDeleteDialog'
 import { minutesToTimeString } from '@/utils/date-utils'
 import type { Schedule, ScheduleInput } from '@/types/schedule'
+import { useTranslation } from '@/i18n'
 
 interface MonthlyCalendarProps {
   readonly onClose: () => void
 }
 
 export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
+  const t = useTranslation()
   const {
     currentMonth,
     selectedDate,
@@ -187,13 +189,13 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
             <button
               type="button"
               onClick={connectGoogle}
-              aria-label="Google Calendar 연결"
+              aria-label={t.aria.connectGoogle}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] text-xs font-medium border border-blue-100 bg-transparent cursor-pointer text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 transition-all duration-200"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              Google Calendar 연결
+              {t.calendar.connectGoogle}
             </button>
           ) : (
             <>
@@ -201,7 +203,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
                 type="button"
                 onClick={() => syncFromGoogle(currentMonth)}
                 disabled={isGoogleSyncing}
-                aria-label="Google Calendar 동기화"
+                aria-label={t.aria.syncGoogle}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] text-xs font-medium border border-green-100 bg-transparent cursor-pointer disabled:cursor-not-allowed text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30 transition-all duration-200 disabled:opacity-50"
               >
                 <svg
@@ -213,15 +215,15 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
                 >
                   <path d="M4 4v5h5M20 20v-5h-5M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 013.51 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                {isGoogleSyncing ? '동기화 중...' : '동기화'}
+                {isGoogleSyncing ? t.common.syncing : t.common.sync}
               </button>
               <button
                 type="button"
                 onClick={disconnectGoogle}
-                aria-label="Google Calendar 연결 해제"
+                aria-label={t.aria.disconnectGoogle}
                 className="px-2.5 py-1.5 rounded-[10px] text-[11px] font-normal border-none bg-transparent cursor-pointer text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
               >
-                연결 해제
+                {t.common.disconnect}
               </button>
             </>
           )}
@@ -231,7 +233,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
         <button
           type="button"
           onClick={onClose}
-          aria-label="YouTube로 돌아가기"
+          aria-label={t.aria.backToYouTube}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium border-none bg-transparent cursor-pointer text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-800/60 transition-all duration-200"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -243,7 +245,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
               strokeLinejoin="round"
             />
           </svg>
-          YouTube로 돌아가기
+          {t.calendar.backToYouTube}
         </button>
       </div>
 
@@ -273,13 +275,13 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
               <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow-sm ring-1 ring-black/10 dark:ring-white/10 p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-base font-bold text-gray-900 dark:text-neutral-200">
-                    {editingSchedule ? '일정 수정' : '새 일정'}
+                    {editingSchedule ? t.schedule.editSchedule : t.schedule.newSchedule}
                   </h4>
                   <button
                     type="button"
                     onClick={closeForm}
                     className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-all duration-200"
-                    aria-label="폼 닫기"
+                    aria-label={t.aria.closeForm}
                   >
                     <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
                       <path d="M13.5 4.5L4.5 13.5M4.5 4.5L13.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -306,7 +308,7 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
                       onClick={() => handleDeleteSchedule(editingSchedule.id)}
                       className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 transition-all duration-200"
                     >
-                      삭제
+                      {t.common.delete}
                     </button>
                   </div>
                 )}

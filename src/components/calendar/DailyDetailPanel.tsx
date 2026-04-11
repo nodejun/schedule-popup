@@ -7,6 +7,7 @@
 import type { Schedule } from '@/types/schedule'
 import { TimelineView } from '@/components/schedule/TimelineView'
 import { formatDateDisplay } from '@/utils/date-utils'
+import { useTranslation } from '@/i18n'
 
 interface DailyDetailPanelProps {
   readonly selectedDate: string
@@ -34,6 +35,7 @@ export const DailyDetailPanel = ({
   onTimeSlotClick,
   previewTime,
 }: DailyDetailPanelProps) => {
+  const t = useTranslation()
   return (
     <div className="bg-white dark:bg-[#252525] rounded-2xl shadow-sm ring-1 ring-black/5 dark:ring-white/10 h-full flex flex-col">
       {/* 헤더 */}
@@ -43,7 +45,7 @@ export const DailyDetailPanel = ({
             type="button"
             onClick={onClose}
             className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-all duration-200"
-            aria-label="패널 닫기"
+            aria-label={t.aria.closePanel}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path
@@ -59,7 +61,7 @@ export const DailyDetailPanel = ({
               {formatDateDisplay(selectedDate)}
             </h3>
             <span className="text-[11px] text-gray-400 leading-snug">
-              {schedules.length}개 일정
+              {t.schedule.scheduleCount(schedules.length)}
             </span>
           </div>
         </div>
@@ -74,7 +76,7 @@ export const DailyDetailPanel = ({
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M7 2V12M2 7H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-          일정 추가
+          {t.schedule.addScheduleShort}
         </button>
       </div>
 

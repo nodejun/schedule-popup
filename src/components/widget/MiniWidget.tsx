@@ -21,6 +21,7 @@ import type { Schedule } from '@/types/schedule'
 import { TodaySchedulePanel } from './TodaySchedulePanel'
 import { WeekHighlights } from './WeekHighlights'
 import { WeekStrip } from '../calendar/WeekStrip'
+import { useTranslation } from '@/i18n'
 
 interface MiniWidgetProps {
   readonly onOpenScheduler?: (date?: string) => void
@@ -34,6 +35,7 @@ const getWeekYearMonths = (weekStart: string): ReadonlyArray<string> => {
 }
 
 export const MiniWidget = ({ onOpenScheduler }: MiniWidgetProps): ReactNode => {
+  const t = useTranslation()
   const today = getToday()
   const [selectedDate, setSelectedDate] = useState<string>(today)
 
@@ -120,14 +122,14 @@ export const MiniWidget = ({ onOpenScheduler }: MiniWidgetProps): ReactNode => {
       <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-red-500 to-red-600">
         <div>
           <h3 className="text-lg font-bold text-white">ShortScheduler</h3>
-          <p className="text-base text-white/80">이번 주 일정</p>
+          <p className="text-base text-white/80">{t.widget.thisWeek}</p>
         </div>
         <button
           type="button"
           onClick={() => handleOpenScheduler(selectedDate)}
           className="text-base text-white/80 hover:text-white transition-colors font-medium"
         >
-          전체 보기 →
+          {t.common.viewAll} →
         </button>
       </div>
 

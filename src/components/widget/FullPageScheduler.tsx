@@ -16,8 +16,10 @@ import { Button } from '../common/Button'
 import { TimelineView } from '../schedule/TimelineView'
 import { ScheduleForm } from '../schedule/ScheduleForm'
 import { RecurringDeleteDialog } from '../schedule/RecurringDeleteDialog'
+import { useTranslation } from '@/i18n'
 
 export const FullPageScheduler = (): ReactNode => {
+  const t = useTranslation()
   const {
     selectedDate,
     schedules,
@@ -88,7 +90,7 @@ export const FullPageScheduler = (): ReactNode => {
           ShortScheduler
         </h1>
         <Button variant="primary" size="md" onClick={() => openAddForm()}>
-          + 일정 추가
+          {t.schedule.addSchedule}
         </Button>
       </div>
 
@@ -123,7 +125,7 @@ export const FullPageScheduler = (): ReactNode => {
       <Modal
         isOpen={isFormOpen}
         onClose={closeForm}
-        title={editingSchedule ? '일정 수정' : '새 일정'}
+        title={editingSchedule ? t.schedule.editSchedule : t.schedule.newSchedule}
       >
         <ScheduleForm
           selectedDate={selectedDate}
@@ -141,7 +143,7 @@ export const FullPageScheduler = (): ReactNode => {
               onClick={handleDelete}
               className="w-full"
             >
-              이 일정 삭제
+              {t.schedule.deleteSchedule}
             </Button>
           </div>
         )}

@@ -9,6 +9,7 @@
 import type { Schedule, ScheduleColor } from '@/types/schedule'
 import { isToday } from '@/utils/date-utils'
 import { isSameMonth } from '@/utils/calendar-utils'
+import { useTranslation } from '@/i18n'
 
 interface MonthDayCellProps {
   readonly date: string
@@ -36,6 +37,7 @@ export const MonthDayCell = ({
   isSelected,
   onClick,
 }: MonthDayCellProps) => {
+  const t = useTranslation()
   const dayNumber = parseInt(date.split('-')[2] ?? '1', 10)
   const today = isToday(date)
   const inMonth = isSameMonth(date, currentMonth)
@@ -59,7 +61,7 @@ export const MonthDayCell = ({
         !inMonth && 'opacity-30',
       ].filter(Boolean).join(' ')}
       onClick={() => onClick(date)}
-      aria-label={`${date} 일정 ${schedules.length}개`}
+      aria-label={t.aria.scheduleCount(date, schedules.length)}
     >
       {/* 날짜 숫자 */}
       <span
@@ -96,7 +98,7 @@ export const MonthDayCell = ({
       {/* 나머지 개수 */}
       {remaining > 0 && (
         <span className="text-[10px] font-medium text-gray-400 dark:text-neutral-500 px-1 leading-snug">
-          +{remaining}개
+          {t.schedule.moreCount(remaining)}
         </span>
       )}
     </button>

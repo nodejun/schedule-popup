@@ -18,6 +18,7 @@ import { useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { DeleteMode } from '@/stores/schedule-store'
 import { Button } from '../common/Button'
+import { useTranslation } from '@/i18n'
 
 interface RecurringDeleteDialogProps {
   readonly isOpen: boolean
@@ -33,32 +34,20 @@ interface OptionDef {
   readonly description: string
 }
 
-/** 라디오 옵션 정의 — Google Calendar와 동일한 순서/문구 */
-const OPTIONS: ReadonlyArray<OptionDef> = [
-  {
-    value: 'instance',
-    label: '이 일정만',
-    description: '선택한 날짜의 반복 1건만 삭제',
-  },
-  {
-    value: 'future',
-    label: '이 일정과 향후 일정',
-    description: '오늘 이후 반복은 모두 삭제, 과거 기록은 보존',
-  },
-  {
-    value: 'all',
-    label: '모든 반복 일정',
-    description: '과거·미래 모든 반복을 삭제',
-  },
-]
-
 export const RecurringDeleteDialog = ({
   isOpen,
   scheduleTitle,
   onCancel,
   onConfirm,
 }: RecurringDeleteDialogProps): ReactNode => {
+  const t = useTranslation()
   const [mode, setMode] = useState<DeleteMode>('instance')
+
+  const options: ReadonlyArray<OptionDef> = [
+    { value: 'instance', label: t.recurringDelete.thisOnly, description: t.recurringDelete.thisOnlyDesc },
+    { value: 'future', label: t.recurringDelete.thisAndFuture, description: t.recurringDelete.thisAndFutureDesc },
+    { value: 'all', label: t.recurringDelete.allEvents, description: t.recurringDelete.allEventsDesc },
+  ]
 
   // 다이얼로그가 다시 열릴 때마다 디폴트로 리셋
   useEffect(() => {
@@ -102,7 +91,7 @@ export const RecurringDeleteDialog = ({
           id="recurring-delete-title"
           className="text-lg font-semibold text-gray-700 dark:text-neutral-300 mb-2"
         >
-          반복 일정 삭제
+          {t.recurringDelete.title}
         </h3>
         <p className="text-lg font-bold text-gray-900 dark:text-neutral-100 mb-5 truncate leading-snug">
           "{scheduleTitle}"
@@ -110,7 +99,7 @@ export const RecurringDeleteDialog = ({
 
         {/* 라디오 옵션 */}
         <div className="flex flex-col gap-2 mb-6">
-          {OPTIONS.map((opt) => {
+          {options.map((opt) => {
             const isSelected = mode === opt.value
             return (
               <label
@@ -151,7 +140,7 @@ export const RecurringDeleteDialog = ({
         {/* 버튼 */}
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="md" onClick={onCancel} type="button">
-            취소
+            {t.common.cancel}
           </Button>
           <Button
             variant="danger"
@@ -159,7 +148,7 @@ export const RecurringDeleteDialog = ({
             onClick={() => onConfirm(mode)}
             type="button"
           >
-            삭제
+            {t.common.delete}
           </Button>
         </div>
       </div>

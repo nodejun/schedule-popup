@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "ShortScheduler",
+    "description": "확장 프로그램 이름"
+  },
+  "extDescription": {
+    "message": "YouTube 쇼츠를 개인 스케줄러로 대체합니다",
+    "description": "확장 프로그램 설명"
+  }
+}

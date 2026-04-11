@@ -6,16 +6,17 @@
  * zod 스키마로 실시간 검증한다.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import type { ScheduleInput, ScheduleColor } from '@/types/schedule'
 import type { Schedule } from '@/types/schedule'
-import { scheduleInputSchema } from '@/schemas/schedule-schema'
+import { createScheduleInputSchema } from '@/schemas/schedule-schema'
 import { Button } from '../common/Button'
 import { useScheduleStore } from '@/stores/schedule-store'
 import { useGoogleCalendarStore } from '@/stores/google-calendar-store'
 import { ColorPicker } from '../common/ColorPicker'
 import { TimeInput } from '../common/TimeInput'
+import { useTranslation } from '@/i18n'
 
 interface ScheduleFormProps {
   readonly selectedDate: string
@@ -48,14 +49,6 @@ interface FormErrors {
   general?: string
 }
 
-/** 반복 옵션 */
-const RECURRENCE_OPTIONS = [
-  { value: '', label: '안 함' },
-  { value: 'RRULE:FREQ=DAILY', label: '매일' },
-  { value: 'RRULE:FREQ=WEEKLY', label: '매주' },
-  { value: 'RRULE:FREQ=MONTHLY', label: '매월' },
-  { value: 'RRULE:FREQ=YEARLY', label: '매년 (생일/기념일)' },
-] as const
 
 const createInitialState = (
   schedule: Schedule | null,
@@ -81,12 +74,22 @@ export const ScheduleForm = ({
   onColorChange,
   onTimeChange,
 }: ScheduleFormProps): ReactNode => {
+  const t = useTranslation()
+  const schema = useMemo(() => createScheduleInputSchema(), [])
   const initialFormTime = useScheduleStore((s) => s.initialFormTime)
   const { googleAuth, calendarList } = useGoogleCalendarStore()
   const [form, setForm] = useState<FormState>(() =>
     createInitialState(editingSchedule, selectedDate, initialFormTime)
   )
   const [errors, setErrors] = useState<FormErrors>({})
+
+  const recurrenceOptions = useMemo(() => [
+    { value: '', label: t.recurrence.none },
+    { value: 'RRULE:FREQ=DAILY', label: t.recurrence.daily },
+    { value: 'RRULE:FREQ=WEEKLY', label: t.recurrence.weekly },
+    { value: 'RRULE:FREQ=MONTHLY', label: t.recurrence.monthly },
+    { value: 'RRULE:FREQ=YEARLY', label: t.recurrence.yearly },
+  ], [t])
 
   useEffect(() => {
     setForm(createInitialState(editingSchedule, selectedDate, initialFormTime))
@@ -109,8 +112,7 @@ export const ScheduleForm = ({
   const validate = (): FormErrors => {
     const newErrors: FormErrors = {}
 
-    // zod 검증
-    const result = scheduleInputSchema.safeParse({
+    const result = schema.safeParse({
       title: form.title,
       description: form.description || undefined,
       date: selectedDate,
@@ -122,15 +124,9 @@ export const ScheduleForm = ({
     if (!result.success) {
       for (const issue of result.error.issues) {
         const field = issue.path[0] as string
-        if (field === 'title') {
-          newErrors.title = issue.message
-        }
-        if (field === 'startTime') {
-          newErrors.startTime = issue.message
-        }
-        if (field === 'endTime') {
-          newErrors.endTime = issue.message
-        }
+        if (field === 'title') newErrors.title = issue.message
+        if (field === 'startTime') newErrors.startTime = issue.message
+        if (field === 'endTime') newErrors.endTime = issue.message
       }
     }
 
@@ -161,7 +157,7 @@ export const ScheduleForm = ({
       await onSubmit(input)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      setErrors({ general: `수정 실패: ${msg}` })
+      setErrors({ general: t.schedule.editFailed(msg) })
     }
   }
 
@@ -169,7 +165,7 @@ export const ScheduleForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {/* 제목 — 큰 입력창 (Google Calendar 스타일) */}
+      {/* Title input */}
       <div className="flex flex-col gap-1">
         <input
           type="text"
@@ -178,7 +174,7 @@ export const ScheduleForm = ({
             updateField('title', e.target.value)
             onTitleChange?.(e.target.value)
           }}
-          placeholder="제목 추가"
+          placeholder={t.schedule.titlePlaceholder}
           maxLength={100}
           className={`px-1 py-2 border-0 border-b-2 text-2xl font-bold bg-transparent text-gray-900 dark:text-neutral-100 placeholder-gray-300 dark:placeholder-neutral-600 transition-all duration-200 focus:outline-none ${
             errors.title
@@ -192,46 +188,46 @@ export const ScheduleForm = ({
         )}
       </div>
 
-      {/* 설명 */}
+      {/* Description */}
       <div className="flex flex-col gap-1.5">
         <label className="text-base font-medium text-gray-700 dark:text-neutral-300">
-          설명 (선택)
+          {t.schedule.descriptionLabel}
         </label>
         <textarea
           value={form.description}
           onChange={(e) => updateField('description', e.target.value)}
-          placeholder="메모를 남겨보세요"
+          placeholder={t.schedule.descriptionPlaceholder}
           maxLength={500}
           rows={2}
           className="px-4 py-3 rounded-xl border border-gray-200 dark:border-neutral-600 text-base bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
         />
       </div>
 
-      {/* 시간 */}
+      {/* Time */}
       <div className="flex gap-3">
         <div className="flex-1">
           <TimeInput
-            label="시작"
+            label={t.schedule.startLabel}
             value={form.startTime}
-            onChange={(t) => {
-              updateField('startTime', t)
-              // 종료 시간을 시작 + 1시간으로 자동 설정
-              const [hStr, mStr] = t.split(':')
+            onChange={(v) => {
+              updateField('startTime', v)
+              // Auto-set end time to start + 1 hour
+              const [hStr, mStr] = v.split(':')
               const endMinutes = Math.min((parseInt(hStr ?? '0', 10) + 1) * 60 + parseInt(mStr ?? '0', 10), 23 * 60 + 45)
               const autoEnd = `${String(Math.floor(endMinutes / 60)).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}`
               updateField('endTime', autoEnd)
-              onTimeChange?.(t, autoEnd)
+              onTimeChange?.(v, autoEnd)
             }}
             error={errors.startTime}
           />
         </div>
         <div className="flex-1">
           <TimeInput
-            label="종료"
+            label={t.schedule.endLabel}
             value={form.endTime}
-            onChange={(t) => {
-              updateField('endTime', t)
-              onTimeChange?.(form.startTime, t)
+            onChange={(v) => {
+              updateField('endTime', v)
+              onTimeChange?.(form.startTime, v)
             }}
             min={form.startTime}
             error={errors.endTime}
@@ -239,7 +235,7 @@ export const ScheduleForm = ({
         </div>
       </div>
 
-      {/* 시간 겹침 경고 */}
+      {/* General error */}
       {errors.general && (
         <div className="px-4 py-2.5 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 ring-1 ring-yellow-200 dark:ring-yellow-800">
           <span className="text-sm text-yellow-700 dark:text-yellow-400">
@@ -248,11 +244,11 @@ export const ScheduleForm = ({
         </div>
       )}
 
-      {/* 캘린더 선택 — Google 연결 시 표시 */}
+      {/* Calendar selector — shown when Google is connected */}
       {googleAuth.isAuthenticated && (
         <div className="flex flex-col gap-1.5">
           <label className="text-base font-medium text-gray-700 dark:text-neutral-300">
-            캘린더
+            {t.schedule.calendarLabel}
           </label>
           <select
             value={form.calendarId}
@@ -262,27 +258,29 @@ export const ScheduleForm = ({
             {calendarList.length > 0 ? (
               calendarList.map((cal) => (
                 <option key={cal.id} value={cal.id}>
-                  {cal.primary ? `${cal.summary} (기본)` : cal.summary}
+                  {cal.primary
+                    ? `${cal.summary} (${t.schedule.calendarDefaultBadge})`
+                    : cal.summary}
                 </option>
               ))
             ) : (
-              <option value="primary">개인 (기본)</option>
+              <option value="primary">{t.schedule.defaultCalendar}</option>
             )}
           </select>
         </div>
       )}
 
-      {/* 반복 선택 */}
+      {/* Recurrence */}
       <div className="flex flex-col gap-1.5">
         <label className="text-base font-medium text-gray-700 dark:text-neutral-300">
-          반복
+          {t.schedule.repeatLabel}
         </label>
         <select
           value={form.recurrence ?? ''}
           onChange={(e) => updateField('recurrence', e.target.value || null)}
           className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-neutral-600 text-base bg-white dark:bg-neutral-700 text-gray-900 dark:text-neutral-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
         >
-          {RECURRENCE_OPTIONS.map((opt) => (
+          {recurrenceOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
@@ -290,10 +288,10 @@ export const ScheduleForm = ({
         </select>
       </div>
 
-      {/* 색상 */}
+      {/* Color */}
       <div className="flex flex-col gap-2">
         <label className="text-base font-medium text-gray-700 dark:text-neutral-300">
-          색상
+          {t.schedule.colorLabel}
         </label>
         <ColorPicker
           value={form.color}
@@ -304,13 +302,13 @@ export const ScheduleForm = ({
         />
       </div>
 
-      {/* 버튼 */}
+      {/* Buttons */}
       <div className="flex justify-end gap-3 pt-3">
         <Button variant="ghost" type="button" size="lg" onClick={onCancel}>
-          취소
+          {t.common.cancel}
         </Button>
         <Button variant="primary" type="submit" size="lg">
-          {isEditMode ? '수정' : '추가'}
+          {isEditMode ? t.common.save : t.common.add}
         </Button>
       </div>
     </form>

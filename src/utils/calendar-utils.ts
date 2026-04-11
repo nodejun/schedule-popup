@@ -4,6 +4,7 @@
  */
 
 import { formatDate, addDays } from './date-utils'
+import { getTranslations } from '@/i18n'
 
 /** 월요일 기준 요일 인덱스 (0=월, 6=일) */
 const getMondayBasedDay = (date: Date): number => {
@@ -115,13 +116,14 @@ export const toYearMonth = (dateStr: string): string => {
 }
 
 /**
- * YYYY-MM 형식을 "2026년 3월"으로 표시
+ * YYYY-MM 형식을 로케일에 맞는 월 표시 문자열로 변환
+ * ko: "2026년 3월", en: "2026. 03"
  */
 export const formatMonthDisplay = (yearMonth: string): string => {
   const [yearStr, monthStr] = yearMonth.split('-')
   const year = parseInt(yearStr ?? '2026', 10)
   const month = parseInt(monthStr ?? '1', 10)
-  return `${year}년 ${month}월`
+  return getTranslations().time.formatMonthYear(year, month)
 }
 
 /**
@@ -138,8 +140,16 @@ export const getCurrentMonth = (): string => {
   return toYearMonth(formatDate(new Date()))
 }
 
-/** 요일 헤더 라벨 (월요일 시작) */
+/** 요일 헤더 라벨 (월요일 시작, 한국어 — 하위 호환용) */
 export const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'] as const
 
 /** 요일 헤더 라벨 (짧은 영문) */
 export const WEEKDAY_LABELS_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+
+/**
+ * 로케일에 맞는 요일 헤더 라벨 반환 (월요일 시작)
+ * ko: ['월', '화', '수', '목', '금', '토', '일']
+ * en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+ */
+export const getWeekdayLabels = (): ReadonlyArray<string> =>
+  getTranslations().time.weekdays

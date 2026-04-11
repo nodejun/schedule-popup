@@ -11,6 +11,7 @@ import type { ReactNode, MouseEvent } from 'react'
 import type { Schedule } from '@/types/schedule'
 import { timeToMinutes, getTimeSlots, isToday, sortByStartTime, minutesToTimeString } from '@/utils/date-utils'
 import { ScheduleCard } from './ScheduleCard'
+import { useTranslation } from '@/i18n'
 
 interface TimelineViewProps {
   readonly schedules: ReadonlyArray<Schedule>
@@ -30,11 +31,11 @@ interface TimelineViewProps {
   } | null
 }
 
-/** "09:00" → "AM 9:00", "14:30" → "PM 2:30" */
-const formatAmPm = (time: string): string => {
+/** "09:00" → "AM 9:00", "14:30" → "PM 2:30" (locale-aware) */
+const formatAmPm = (time: string, am: string, pm: string): string => {
   const [hourStr, minute] = time.split(':')
   const hour = parseInt(hourStr ?? '0', 10)
-  const period = hour < 12 ? 'AM' : 'PM'
+  const period = hour < 12 ? am : pm
   const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
   return `${period} ${displayHour}:${minute}`
 }
@@ -51,6 +52,7 @@ export const TimelineView = ({
   onTimeSlotClick,
   previewTime,
 }: TimelineViewProps): ReactNode => {
+  const t = useTranslation()
   const [currentMinutes, setCurrentMinutes] = useState(() => {
     const now = new Date()
     return now.getHours() * 60 + now.getMinutes()
@@ -158,7 +160,7 @@ export const TimelineView = ({
           {/* 시간 라벨 + 구분선 — 같은 높이에 나란히 */}
           <div className="absolute left-0 right-0 top-0 flex items-center">
             <span className="w-[70px] shrink-0 text-right pr-2 text-[11px] text-gray-900 dark:text-neutral-300 select-none tabular-nums font-medium whitespace-nowrap">
-              {formatAmPm(slot)}
+              {formatAmPm(slot, t.time.am, t.time.pm)}
             </span>
             <div className="flex-1 h-px bg-neutral-200 dark:bg-neutral-700" />
           </div>
@@ -249,7 +251,7 @@ export const TimelineView = ({
 
           if (item.isPreview && previewTime) {
             // 미리보기 블록 (나란히 배치 적용)
-            const displayTitle = previewTime.title?.trim() || '(제목 없음)'
+            const displayTitle = previewTime.title?.trim() || t.schedule.noTitle
             const c = previewColors[previewTime.color ?? 'blue'] ?? previewColors['blue']!
             const leftBase = 70
             const rightGap = 8
@@ -273,7 +275,7 @@ export const TimelineView = ({
                   {displayTitle}
                 </p>
                 <p className={`text-[12px] font-medium mt-1 tabular-nums ${c.sub}`}>
-                  {formatAmPm(previewTime.startTime)} ~ {formatAmPm(previewTime.endTime)}
+                  {formatAmPm(previewTime.startTime, t.time.am, t.time.pm)} ~ {formatAmPm(previewTime.endTime, t.time.am, t.time.pm)}
                 </p>
               </div>
             )
@@ -306,8 +308,8 @@ export const TimelineView = ({
       {schedules.length === 0 && !previewTime && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-neutral-400 dark:text-neutral-500">
-            <p className="text-sm">일정이 없습니다</p>
-            <p className="text-xs mt-1">+ 버튼을 눌러 추가하세요</p>
+            <p className="text-sm">{t.schedule.noSchedules}</p>
+            <p className="text-xs mt-1">{t.schedule.addPrompt}</p>
           </div>
         </div>
       )}

@@ -118,13 +118,15 @@ describe('addDays', () => {
 
 describe('getDayOfWeek', () => {
   it('요일을 올바르게 반환한다', () => {
-    expect(getDayOfWeek('2026-03-06')).toBe('금')
+    // i18n defaults to English in test environment (no chrome.i18n.getUILanguage)
+    expect(getDayOfWeek('2026-03-06')).toBe('Fri')
   })
 })
 
 describe('formatDateDisplay', () => {
   it('표시용 날짜 문자열을 반환한다', () => {
-    expect(formatDateDisplay('2026-03-06')).toBe('3월 6일 (금)')
+    // i18n defaults to English in test environment (no chrome.i18n.getUILanguage)
+    expect(formatDateDisplay('2026-03-06')).toBe('3/6 (Fri)')
   })
 })
 

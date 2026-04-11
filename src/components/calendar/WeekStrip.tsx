@@ -7,9 +7,10 @@
  */
 
 import { useCallback } from 'react'
-import { getWeekDates, WEEKDAY_LABELS } from '@/utils/calendar-utils'
+import { getWeekDates, getWeekdayLabels } from '@/utils/calendar-utils'
 import { isToday } from '@/utils/date-utils'
 import type { Schedule } from '@/types/schedule'
+import { useTranslation, getTranslations } from '@/i18n'
 
 interface DayColumnProps {
   readonly date: string
@@ -20,6 +21,7 @@ interface DayColumnProps {
 }
 
 const DayColumn = ({ date, dayLabel, scheduleCount, isSelected, onClick }: DayColumnProps) => {
+  const t = useTranslation()
   const today = isToday(date)
   const dayNumber = parseInt(date.split('-')[2] ?? '1', 10)
 
@@ -30,7 +32,7 @@ const DayColumn = ({ date, dayLabel, scheduleCount, isSelected, onClick }: DayCo
       className="flex flex-col items-center gap-1.5 py-2 px-0.5 rounded-lg
                  hover:bg-neutral-100 dark:hover:bg-neutral-700/50
                  transition-colors cursor-pointer flex-1 min-w-0"
-      aria-label={`${date} 일정 ${scheduleCount}개`}
+      aria-label={t.aria.scheduleCount(date, scheduleCount)}
     >
       {/* 요일 */}
       <span
@@ -89,11 +91,12 @@ interface WeekStripProps {
 }
 
 const getWeekLabel = (weekStart: string): string => {
+  const t = getTranslations()
   const date = new Date(weekStart)
   const month = date.getMonth() + 1
   const day = date.getDate()
   const weekNum = Math.ceil(day / 7)
-  return `${month}월 ${weekNum}주`
+  return t.calendar.weekLabel(month, weekNum)
 }
 
 export const WeekStrip = ({
@@ -105,7 +108,9 @@ export const WeekStrip = ({
   onPrevWeek,
   onNextWeek,
 }: WeekStripProps) => {
+  const t = useTranslation()
   const weekDates = getWeekDates(weekStart)
+  const weekdayLabels = getWeekdayLabels()
   const hasNav = Boolean(onPrevWeek || onNextWeek)
 
   const handleDayClick = useCallback(
@@ -126,7 +131,7 @@ export const WeekStrip = ({
                        hover:text-neutral-900 dark:hover:text-neutral-100
                        hover:bg-neutral-100 dark:hover:bg-neutral-700
                        transition-colors text-2xl font-bold"
-            aria-label="이전 주"
+            aria-label={t.aria.prevWeek}
           >
             ‹
           </button>
@@ -141,7 +146,7 @@ export const WeekStrip = ({
                        hover:text-neutral-900 dark:hover:text-neutral-100
                        hover:bg-neutral-100 dark:hover:bg-neutral-700
                        transition-colors text-2xl font-bold"
-            aria-label="다음 주"
+            aria-label={t.aria.nextWeek}
           >
             ›
           </button>
@@ -159,7 +164,7 @@ export const WeekStrip = ({
             <DayColumn
               key={date}
               date={date}
-              dayLabel={WEEKDAY_LABELS[index] ?? ''}
+              dayLabel={weekdayLabels[index] ?? ''}
               scheduleCount={(weekSchedules[date] ?? []).length}
               isSelected={selectedDate === date}
               onClick={handleDayClick}

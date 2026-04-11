@@ -13,8 +13,10 @@ import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
 import { ScheduleList } from '@/components/schedule/ScheduleList'
 import { ScheduleForm } from '@/components/schedule/ScheduleForm'
+import { useTranslation } from '@/i18n'
 
 export const App = (): ReactNode => {
+  const t = useTranslation()
   const {
     selectedDate,
     schedules,
@@ -58,7 +60,7 @@ export const App = (): ReactNode => {
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-lg font-bold">ShortScheduler</h1>
           <Button variant="primary" size="sm" onClick={() => openAddForm()}>
-            + 추가
+            {t.schedule.addSchedule}
           </Button>
         </div>
 
@@ -89,7 +91,7 @@ export const App = (): ReactNode => {
           onClick={handleOpenFullScheduler}
           className="w-full py-2 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors cursor-pointer"
         >
-          YouTube에서 스케줄러 열기 →
+          {t.schedule.openInYouTube}
         </button>
       </div>
 
@@ -97,7 +99,7 @@ export const App = (): ReactNode => {
       <Modal
         isOpen={isFormOpen}
         onClose={closeForm}
-        title={editingSchedule ? '일정 수정' : '새 일정'}
+        title={editingSchedule ? t.schedule.editSchedule : t.schedule.newSchedule}
       >
         <ScheduleForm
           selectedDate={selectedDate}

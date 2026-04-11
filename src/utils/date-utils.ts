@@ -4,6 +4,7 @@
  */
 
 import type { Schedule } from '@/types/schedule'
+import { getTranslations } from '@/i18n'
 
 export const formatDate = (date: Date): string => {
   const year = date.getFullYear()
@@ -69,17 +70,18 @@ export const addDays = (dateStr: string, days: number): string => {
 }
 
 export const getDayOfWeek = (dateStr: string): string => {
-  const days = ['일', '월', '화', '수', '목', '금', '토']
+  const t = getTranslations()
   const date = new Date(dateStr)
-  return days[date.getDay()] ?? ''
+  return t.time.weekdaysShort[date.getDay()] ?? ''
 }
 
 export const formatDateDisplay = (dateStr: string): string => {
+  const t = getTranslations()
   const date = new Date(dateStr)
   const month = date.getMonth() + 1
   const day = date.getDate()
   const dayOfWeek = getDayOfWeek(dateStr)
-  return `${month}월 ${day}일 (${dayOfWeek})`
+  return t.time.formatDayLabel(month, day, dayOfWeek)
 }
 
 export const getTimeDurationMinutes = (

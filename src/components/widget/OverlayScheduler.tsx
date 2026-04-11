@@ -7,6 +7,7 @@
 
 import type { ReactNode } from 'react'
 import { FullPageScheduler } from './FullPageScheduler'
+import { useTranslation } from '@/i18n'
 
 interface OverlaySchedulerProps {
   /** 오버레이 닫기 콜백 */
@@ -16,6 +17,7 @@ interface OverlaySchedulerProps {
 export const OverlayScheduler = ({
   onClose,
 }: OverlaySchedulerProps): ReactNode => {
+  const t = useTranslation()
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       {/* 상단 네비게이션 */}
@@ -40,7 +42,7 @@ export const OverlayScheduler = ({
               <path d="M18 6 6 18" />
               <path d="m6 6 12 12" />
             </svg>
-            YouTube로 돌아가기
+            {t.calendar.backToYouTube}
           </button>
         </div>
       </nav>
