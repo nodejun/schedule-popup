@@ -12,6 +12,7 @@
 
 import { en } from './en'
 import { ko } from './ko'
+import { useSettingsStore } from '@/stores/settings-store'
 
 /**
  * Union of all supported locale types.
@@ -46,23 +47,34 @@ function detectLanguage(): string {
 }
 
 /**
+ * Settings 언어 설정을 반영한 실효 언어 코드를 반환한다.
+ * 'auto'인 경우 브라우저/Chrome 언어를 자동 감지한다.
+ */
+function resolveLanguage(setting: 'auto' | 'ko' | 'en'): string {
+  return setting === 'auto' ? detectLanguage() : setting
+}
+
+/**
  * Returns the translation object for the active locale.
  * This is a plain function (not a React hook) so it can be used
  * outside of React components (e.g., in stores or utils).
+ *
+ * Reads language preference from settings store (getState — no subscription).
  */
 export function getTranslations() {
-  return getLocale(detectLanguage())
+  const { settings } = useSettingsStore.getState()
+  return getLocale(resolveLanguage(settings.language))
 }
 
 /**
  * React hook that returns translations for the active locale.
  *
- * The locale is resolved once at call time and is stable within
- * a render.  Language changes require a page reload (same as Chrome's
- * own i18n behaviour).
+ * Subscribes to the settings store so language changes (KO/EN toggle)
+ * trigger a re-render without a page reload.
  */
 export function useTranslation() {
-  return getLocale(detectLanguage())
+  const language = useSettingsStore((s) => s.settings.language)
+  return getLocale(resolveLanguage(language))
 }
 
 // Re-export locale objects for direct access when needed

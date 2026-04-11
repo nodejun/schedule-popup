@@ -92,12 +92,17 @@ const modifySidebarLink = (
   // 아이콘 변경
   const iconContainer = link.querySelector("yt-icon");
   if (iconContainer) {
-    // 원본 자식 노드를 WeakMap에 저장 (innerHTML 문자열 대신 → XSS 위험 없음)
+    // 원본 자식 노드를 WeakMap에 저장
     iconOriginalChildren.set(iconContainer, [...iconContainer.childNodes].map((n) => n.cloneNode(true)));
-    const parser = new DOMParser();
-    const svgDoc = parser.parseFromString(CALENDAR_ICON_SVG, 'image/svg+xml');
-    const svgEl = svgDoc.documentElement;
-    iconContainer.replaceChildren(svgEl);
+    // <template> 태그를 이용해 HTML 컨텍스트에서 파싱 → SVG 네임스페이스 자동 처리
+    // DOMParser("image/svg+xml")은 XML 문서로 파싱되어 HTML DOM 삽입 시 렌더링 실패함
+    // <template>은 스크립트를 실행하지 않아 XSS 안전하고, SVG를 올바르게 파싱함
+    const template = document.createElement('template');
+    template.innerHTML = CALENDAR_ICON_SVG;
+    const svgEl = template.content.firstElementChild;
+    if (svgEl) {
+      iconContainer.replaceChildren(svgEl);
+    }
   }
 
   // 클릭 동작 변경

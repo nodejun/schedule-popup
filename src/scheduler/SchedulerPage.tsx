@@ -9,8 +9,10 @@
  * - FullPageScheduler 컴포넌트 재사용
  */
 
+import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { FullPageScheduler } from '@/components/widget/FullPageScheduler'
+import { useSettingsStore } from '@/stores/settings-store'
 import { useTranslation } from '@/i18n'
 
 const handleBackToYouTube = (): void => {
@@ -25,11 +27,23 @@ const handleBackToYouTube = (): void => {
 
 export const SchedulerPage = (): ReactNode => {
   const t = useTranslation()
+  const { settings, loadSettings, updateSettings } = useSettingsStore()
+
+  useEffect(() => {
+    void loadSettings()
+  }, [loadSettings])
+
+  const handleLanguageToggle = () => {
+    // 'auto' 또는 'ko' → 'en', 'en' → 'ko'
+    const next = settings.language === 'en' ? 'ko' : 'en'
+    void updateSettings({ language: next })
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       {/* 상단 네비게이션 */}
       <nav className="sticky top-0 z-50 bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 shadow-sm">
-        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center">
+        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
           <button
             type="button"
             onClick={handleBackToYouTube}
@@ -50,6 +64,16 @@ export const SchedulerPage = (): ReactNode => {
               <path d="m12 19-7-7 7-7" />
             </svg>
             {t.calendar.backToYouTube}
+          </button>
+
+          {/* 언어 토글 */}
+          <button
+            type="button"
+            onClick={handleLanguageToggle}
+            className="px-3 py-1.5 text-xs font-medium rounded-md border border-neutral-300 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+            title="언어 전환 / Toggle language"
+          >
+            {settings.language === 'en' ? '한국어' : 'English'}
           </button>
         </div>
       </nav>

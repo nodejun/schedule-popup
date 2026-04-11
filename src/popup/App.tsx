@@ -8,6 +8,7 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { useScheduleStore } from '@/stores/schedule-store'
+import { useSettingsStore } from '@/stores/settings-store'
 import { DateNavigator } from '@/components/common/DateNavigator'
 import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
@@ -17,6 +18,7 @@ import { useTranslation } from '@/i18n'
 
 export const App = (): ReactNode => {
   const t = useTranslation()
+  const { loadSettings } = useSettingsStore()
   const {
     selectedDate,
     schedules,
@@ -34,8 +36,10 @@ export const App = (): ReactNode => {
   } = useScheduleStore()
 
   useEffect(() => {
+    // 사용자의 언어 설정을 로드해 useTranslation()이 올바른 언어를 반환하도록 한다
+    void loadSettings()
     void fetchSchedules()
-  }, [fetchSchedules])
+  }, [loadSettings, fetchSchedules])
 
   const handleDateChange = (date: string) => {
     void setSelectedDate(date)

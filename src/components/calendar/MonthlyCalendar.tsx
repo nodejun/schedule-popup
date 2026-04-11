@@ -52,7 +52,12 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
     closeForm,
   } = useScheduleStore()
 
-  const { settings, loadSettings } = useSettingsStore()
+  const { settings, loadSettings, updateSettings } = useSettingsStore()
+
+  const handleLanguageToggle = () => {
+    const next = settings.language === 'en' ? 'ko' : 'en'
+    void updateSettings({ language: next })
+  }
 
   const {
     googleAuth,
@@ -229,24 +234,34 @@ export const MonthlyCalendar = ({ onClose }: MonthlyCalendarProps) => {
           )}
         </div>
 
-        {/* YouTube 복귀 버튼 */}
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t.aria.backToYouTube}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium border-none bg-transparent cursor-pointer text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-800/60 transition-all duration-200"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M19 12H5M5 12L12 19M5 12L12 5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          {t.calendar.backToYouTube}
-        </button>
+        {/* 오른쪽: 언어 토글 + YouTube 복귀 버튼 */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleLanguageToggle}
+            title="언어 전환 / Toggle language"
+            className="px-3 py-1.5 rounded-[10px] text-xs font-medium border border-neutral-200 dark:border-neutral-600 bg-transparent cursor-pointer text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-800 transition-all duration-200"
+          >
+            {settings.language === 'en' ? '한국어' : 'English'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t.aria.backToYouTube}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium border-none bg-transparent cursor-pointer text-gray-500 hover:text-gray-700 hover:bg-gray-100/80 dark:text-neutral-400 dark:hover:text-neutral-200 dark:hover:bg-neutral-800/60 transition-all duration-200"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M19 12H5M5 12L12 19M5 12L12 5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {t.calendar.backToYouTube}
+          </button>
+        </div>
       </div>
 
       {/* 로딩 */}
