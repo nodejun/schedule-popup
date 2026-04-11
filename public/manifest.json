@@ -6,8 +6,6 @@
   "version": "1.0.0",
   "permissions": [
     "storage",
-    "alarms",
-    "notifications",
     "scripting",
     "webNavigation",
     "identity"
