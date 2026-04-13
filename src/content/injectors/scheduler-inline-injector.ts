@@ -57,12 +57,12 @@ const createInlineSheet = (): CSSStyleSheet => {
   sheet.replaceSync(`
     :host {
       display: block;
-      width: 100%;
-      height: 100%;
+      /* width/height는 인라인 스타일의 left/right/top/bottom에 의해 자동 결정됨
+         width: 100%를 쓰면 뷰포트 기준이 되어 left 오프셋만큼 오버플로 발생 */
     }
     #mount-point {
-      width: 100%;
-      height: 100%;
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
       overflow: hidden;

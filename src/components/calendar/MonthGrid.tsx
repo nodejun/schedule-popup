@@ -4,8 +4,9 @@
  */
 
 import type { Schedule } from '@/types/schedule'
-import { getMonthGridDates, WEEKDAY_LABELS } from '@/utils/calendar-utils'
+import { getMonthGridDates } from '@/utils/calendar-utils'
 import { MonthDayCell } from './MonthDayCell'
+import { useTranslation } from '@/i18n'
 
 interface MonthGridProps {
   readonly currentMonth: string
@@ -22,14 +23,15 @@ export const MonthGrid = ({
   monthSchedules,
   onDateSelect,
 }: MonthGridProps) => {
+  const t = useTranslation()
   const weeks = getMonthGridDates(currentMonth)
 
   return (
-    <div className="w-full flex-1 flex flex-col min-h-0">
+    <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
       {/* 요일 헤더 */}
-      <div className="grid grid-cols-7 shrink-0 px-1.5 pt-1 mx-1">
+      <div className="grid grid-cols-7 shrink-0 pt-1 px-6">
 
-        {WEEKDAY_LABELS.map((label, index) => (
+        {t.time.weekdays.map((label, index) => (
           <div
             key={label}
             className={`py-3 text-center text-[11px] font-medium tracking-wider leading-snug ${
@@ -44,7 +46,7 @@ export const MonthGrid = ({
       </div>
 
       {/* 날짜 그리드 — 각 행이 동일한 비율로 남은 공간을 채움 */}
-      <div className="flex-1 flex flex-col min-h-0 px-1.5 pb-1.5">
+      <div className="flex-1 flex flex-col min-h-0 px-6 pb-1.5">
         {weeks.map((week, weekIndex) => (
           <div
             key={weekIndex}
