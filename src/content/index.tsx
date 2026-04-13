@@ -26,6 +26,7 @@ import { MiniWidget } from '@/components/widget/MiniWidget'
 import { InlineScheduler } from '@/components/widget/InlineScheduler'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { useScheduleStore } from '@/stores/schedule-store'
+import { useSettingsStore } from '@/stores/settings-store'
 import { toYearMonth } from '@/utils/calendar-utils'
 
 /**
@@ -66,6 +67,16 @@ const createMiniWidgetRenderer = (
  * Content Script 초기화
  */
 const init = (): void => {
+  // 설정 로드 — 언어 등 설정이 MiniWidget에 반영되도록
+  void useSettingsStore.getState().loadSettings()
+
+  // 팝업에서 설정 변경 시 content script에도 즉시 반영
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'sync' && 'settings' in changes) {
+      void useSettingsStore.getState().loadSettings()
+    }
+  })
+
   // 인라인 인젝터 생성 (사이드바 유지, 콘텐츠 영역만 교체)
   const inlineScheduler = createSchedulerInline(
     // 렌더러: InlineScheduler를 Shadow DOM mountPoint에 마운트

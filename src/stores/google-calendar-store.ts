@@ -42,7 +42,7 @@ interface GoogleCalendarActions {
   /** 캐시된 토큰으로 자동 인증 확인 + 동기화 (캘린더 열릴 때 호출) */
   readonly checkAuthAndSync: (yearMonth: string) => Promise<void>
   /** Google 로그인 + 초기 동기화 */
-  readonly connectGoogle: () => Promise<void>
+  readonly connectGoogle: (yearMonth: string) => Promise<void>
   /** Google 로그아웃 */
   readonly disconnectGoogle: () => Promise<void>
   /** Google에서 특정 기간의 일정 가져오기 */
@@ -95,7 +95,7 @@ export const useGoogleCalendarStore = create<GoogleCalendarStore>(
       }
     },
 
-    connectGoogle: async () => {
+    connectGoogle: async (yearMonth: string) => {
       try {
         const token = await getAuthToken(true)
         set({
@@ -106,6 +106,11 @@ export const useGoogleCalendarStore = create<GoogleCalendarStore>(
           },
           syncError: null,
         })
+        // 연결 즉시 동기화 — 버튼 클릭 후 바로 일정이 보이도록
+        await Promise.all([
+          get().syncFromGoogle(yearMonth),
+          get().fetchCalendarList(),
+        ])
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Google 연결 실패'
