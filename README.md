@@ -1,5 +1,7 @@
 # ShortScheduler
 
+**한국어** | [English](README.en.md)
+
 > YouTube Shorts를 스케줄러로 교체하는 Chrome 확장프로그램
 
 YouTube Shorts에 접근하는 순간, 쇼츠 영상 대신 오늘의 일정을 확인하고 새로운 할 일을 추가할 수 있습니다. 단순히 차단하는 것이 아니라 **생산적인 대체재**를 제공합니다.
